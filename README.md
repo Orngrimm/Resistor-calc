@@ -1,5 +1,7 @@
 # Purpose  
 A simple calculator for ideal resistors for non standard values.  
+Want to run it directly from here?  
+https://rawcdn.githack.com/Orngrimm/Resistor-calc/main/Resistor-Calc%20V13.1.html
 
 ## Circuits
 These circuits are available:  
