@@ -5,7 +5,7 @@ available:
 (2 Parallel) + 1 in series  
 (2 Parallel) + (2 Parallel)  
 
-![User Interface](https://github.com/Orngrimm/Resistor-calc/blob/main/Img/2026-03-10%2012-24-09.png?raw=true)
+![User Interface](https://github.com/Orngrimm/Resistor-calc/blob/main/Img/UI.png?raw=true)
 
 
 The limit of the biggest resistor-Value can be adjusted in const DECADES where 1e8 = biggest single resistor would be (theoretically) 999MOhm (if your E-Series supports that).  
