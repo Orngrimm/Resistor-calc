@@ -293,15 +293,21 @@
     return v.toFixed(4) + ' Ω';
   }
 
-  function fmtError(total, target) {
+function fmtError(total, target) {
     if (!isFinite(total) || !isFinite(target) || target === 0) return '—';
     const pct = ((total - target) / target) * 100;
-    const str = pct.toFixed(6).replace(/\.?0+$/, '') + '%';
     const abs = Math.abs(pct);
     const cls = abs < 1 ? 'error-good' : abs < 5 ? 'error-ok' : 'error-bad';
-    return `<span class="${cls}">${str}</span>`;
-  }
 
+    const pctStr = pct.toFixed(6).replace(/\.?0+$/, '') + '%';
+
+    const absErr = total - target;
+    const absStr = (absErr >= 0 ? '+' : '') + fmtR(Math.abs(absErr)).replace(' (jumper)', '').replace(' (not placed)', '') ;
+    const signedAbsStr = absErr < 0 ? '−' + fmtR(Math.abs(absErr)).replace(' (jumper)','').replace(' (not placed)','') : '+' + fmtR(Math.abs(absErr)).replace(' (jumper)','').replace(' (not placed)','');
+
+    return `<span class="${cls}">${pctStr} &nbsp;(${signedAbsStr})</span>`;
+  }
+  
   function lblR(v) {
     if (v === 0)   return '0Ω';
     if (v === INF) return '∞';
@@ -560,4 +566,5 @@
   updateSeriesInfo();
 </script>
 </body>
+
 </html>
