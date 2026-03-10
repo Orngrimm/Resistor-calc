@@ -2,7 +2,7 @@
 A simple calculator for ideal resistors for non standard values.  
 
 ## Circuits
-These circuits are available available:  
+These circuits are available:  
 2 & 3 Reisitors in series  
 2 & 3 Reisitors in Parallel  
 (2 Parallel) + 1 in series  
