@@ -32,5 +32,6 @@ If you enter the technical way (12k4 instead of 12400) please be aware that i on
 The e-Series E48, 96 and 192 are VERY timeconsuming as the calculation work scales exponentially.
 E24 took me on a modern Laptop like 20sec. E48 was in the ballpark of quite some minutes. 
 The time for E96 was exactly "LOL" and for E192 it was "Nice try! See you next year".  
+--> the current approach is brute-force: every possible combination of resistors is tried. For E192 with 9 decades that's ~1750 values, so the 4-deep loop for (2 parallel)+(2 parallel) does 1750⁴ ≈ 9 billion iterations.  
 But honestly, you really need a precision like 1 femto-Ohm? Yeah... Thought so. Stick with E12 ;)
 I also preselected the e6-e24 to be available. If you want more, be my guest and activate them.
