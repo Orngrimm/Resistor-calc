@@ -1,0 +1,1040 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Resistor Combination Calculator</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 40px;
+      background: #f5f5f5;
+    }
+    .container {
+      max-width: 1000px;
+      margin: auto;
+      background: white;
+      padding: 24px;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    h1 { margin-top: 0; font-size: 1.4rem; }
+    .input-row { margin-bottom: 14px; }
+    label { font-weight: bold; display: block; margin-bottom: 4px; }
+    input[type=text], select {
+      width: 100%;
+      padding: 9px;
+      font-size: 1rem;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      box-sizing: border-box;
+      transition: border-color 0.15s, background 0.15s;
+    }
+    input[type=text].input-valid {
+      border-color: #1a7a1a;
+      background: #f0fff0;
+    }
+    input[type=text].input-invalid {
+      border-color: #cc2222;
+      background: #fff0f0;
+    }
+    input[type=text].input-empty {
+      border-color: #ccc;
+      background: white;
+    }
+    .series-checkboxes {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px 10px;
+      margin-bottom: 8px;
+    }
+    .series-checkboxes label {
+      font-weight: normal;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      cursor: pointer;
+      background: #f0f4ff;
+      border: 1px solid #ccd;
+      border-radius: 5px;
+      padding: 5px 10px;
+      font-size: 0.9rem;
+      user-select: none;
+      margin-bottom: 0;
+    }
+    .series-checkboxes label.active {
+      background: #2255cc;
+      color: white;
+      border-color: #2255cc;
+    }
+    .series-checkboxes input[type=checkbox] {
+      width: auto;
+      margin: 0;
+      accent-color: white;
+    }
+    .series-select-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-top: 8px;
+    }
+    .series-select-row label {
+      font-weight: bold;
+      margin-bottom: 0;
+      white-space: nowrap;
+    }
+    select#eseries {
+      width: auto;
+      min-width: 260px;
+      padding: 9px;
+      font-size: 1rem;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+    }
+    .series-info { font-size: 0.82rem; color: #666; margin-top: 4px; }
+    .series-warning {
+      display: none;
+      margin-top: 8px;
+      padding: 8px 12px;
+      background: #fff3cd;
+      border: 1px solid #ffc107;
+      border-radius: 5px;
+      font-size: 0.85rem;
+      color: #856404;
+    }
+    .button-row {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      margin-top: 4px;
+    }
+    button {
+      padding: 10px 28px;
+      font-size: 1rem;
+      background: #2255cc;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+    button:hover { background: #1144aa; }
+    #pdfBtn { display: none; background: #555; }
+    #pdfBtn:hover { background: #333; }
+    #output { margin-top: 22px; }
+    .card-row {
+      display: flex;
+      gap: 14px;
+      margin-bottom: 14px;
+    }
+    .card-row .card {
+      flex: 1;
+      margin-bottom: 0;
+    }
+    .card {
+      background: #f0f4ff;
+      border-left: 4px solid #2255cc;
+      border-radius: 7px;
+      padding: 14px 18px;
+      margin-bottom: 14px;
+    }
+    .card.best-card {
+      border-left: 4px solid #1a7a1a;
+      background: #f0fff0;
+    }
+    .card h3 { margin: 0 0 10px 0; font-size: 1rem; color: #1a3a99; }
+    .card.best-card h3 { color: #1a5a1a; }
+    .best-badge {
+      display: inline-block;
+      background: #1a7a1a;
+      color: white;
+      font-size: 0.72rem;
+      font-weight: bold;
+      padding: 2px 7px;
+      border-radius: 4px;
+      margin-left: 8px;
+      vertical-align: middle;
+    }
+    .card-body {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .card-diagram { flex-shrink: 0; }
+    .card-diagram svg { display: block; }
+    .card-table { flex: 1; }
+    .card-table table { border-collapse: collapse; width: 100%; font-size: 0.93rem; }
+    .card-table td { padding: 3px 6px; }
+    .card-table td:first-child { color: #555; width: 50%; }
+    .card-table td:last-child { font-weight: bold; }
+    .error-good { color: #1a7a1a; }
+    .error-ok   { color: #b07000; }
+    .error-bad  { color: #cc2222; }
+    .loading { color: #888; font-style: italic; }
+    .copy-btn {
+      margin-top: 4px;
+      padding: 5px 12px;
+      font-size: 0.8rem;
+      background: #2255cc;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      align-self: flex-start;
+    }
+    .copy-btn:hover { background: #1144aa; }
+    .copy-btn.copied { background: #1a7a1a; }
+    .card.best-card .copy-btn { background: #1a7a1a; }
+    .card.best-card .copy-btn:hover { background: #145a14; }
+    .wire    { stroke: #333; stroke-width: 1.8; fill: none; }
+    .res     { stroke: #2255cc; stroke-width: 1.8; fill: #dce8ff; }
+    .res-lbl { font-size: 9px; fill: #1a3a99; text-anchor: middle;
+               font-family: Arial; font-weight: bold; }
+    .node    { fill: #333; }
+    .term    { stroke: #333; stroke-width: 2; fill: none; stroke-linecap: round; }
+  </style>
+</head>
+<body>
+<div class="container">
+  <h1>Resistor Combination Calculator</h1>
+
+  <div class="input-row">
+    <label>E-Series:</label>
+    <div class="series-checkboxes" id="seriesCheckboxes"></div>
+    <div id="seriesSelectRow" class="series-select-row" style="display:none;">
+      <label for="eseries">Active series:</label>
+      <select id="eseries" onchange="updateSeriesInfo()"></select>
+    </div>
+    <div class="series-info" id="seriesInfo"></div>
+    <div class="series-warning" id="seriesWarning">
+      Note: E48-E192 have more values per decade and may take a moment to calculate.
+    </div>
+  </div>
+
+  <div class="input-row">
+    <label for="target">Target Resistance:</label>
+    <input type="text" id="target" class="input-empty"
+           placeholder="e.g. 4700 or 4k7 or 4.7k or 1M or 100R" />
+  </div>
+
+  <div class="button-row">
+    <button onclick="calculate()">Calculate</button>
+    <button id="pdfBtn" onclick="exportPDF()">Export PDF</button>
+  </div>
+
+  <div id="output"></div>
+  <div style="margin-top:18px; padding:10px 14px; background:#fff8e1;
+              border:1px solid #f0c040; border-radius:6px;
+              font-size:0.85rem; color:#7a5c00;">
+    ⚠️ Always check the results and check-calculate them!
+  </div>
+<script>
+  // ── E-series selection ─────────────────────────────────────────────────────
+  // true  = checkbox ticked by default
+  // false = checkbox unticked by default
+  const E_SERIES_ENABLED = {
+    E6:   true,
+    E12:  true,
+    E24:  true,
+    E48:  false,
+    E96:  false,
+    E192: false,
+  };
+
+  // Which series is pre-selected in the dropdown by default
+  const E_SERIES_DEFAULT = 'E12';
+
+  // ── E-series data ──────────────────────────────────────────────────────────
+  const E_SERIES = {
+    E6:   [1.0, 1.5, 2.2, 3.3, 4.7, 6.8],
+    E12:  [1.0, 1.2, 1.5, 1.8, 2.2, 2.7, 3.3, 3.9, 4.7, 5.6, 6.8, 8.2],
+    E24:  [1.0,1.1,1.2,1.3,1.5,1.6,1.8,2.0,2.2,2.4,2.7,3.0,
+           3.3,3.6,3.9,4.3,4.7,5.1,5.6,6.2,6.8,7.5,8.2,9.1],
+    E48:  [1.00,1.05,1.10,1.15,1.21,1.27,1.33,1.40,1.47,1.54,1.62,1.69,
+           1.78,1.87,1.96,2.05,2.15,2.26,2.37,2.49,2.61,2.74,2.87,3.01,
+           3.16,3.32,3.48,3.65,3.83,4.02,4.22,4.42,4.64,4.87,5.11,5.36,
+           5.62,5.90,6.19,6.49,6.81,7.15,7.50,7.87,8.25,8.66,9.09,9.53],
+    E96:  [1.00,1.02,1.05,1.07,1.10,1.13,1.15,1.18,1.21,1.24,1.27,1.30,
+           1.33,1.37,1.40,1.43,1.47,1.50,1.54,1.58,1.62,1.65,1.69,1.74,
+           1.78,1.82,1.87,1.91,1.96,2.00,2.05,2.10,2.15,2.21,2.26,2.32,
+           2.37,2.43,2.49,2.55,2.61,2.67,2.74,2.80,2.87,2.94,3.01,3.09,
+           3.16,3.24,3.32,3.40,3.48,3.57,3.65,3.74,3.83,3.92,4.02,4.12,
+           4.22,4.32,4.42,4.53,4.64,4.75,4.87,4.99,5.11,5.23,5.36,5.49,
+           5.62,5.76,5.90,6.04,6.19,6.34,6.49,6.65,6.81,6.98,7.15,7.32,
+           7.50,7.68,7.87,8.06,8.25,8.45,8.66,8.87,9.09,9.31,9.53,9.76],
+    E192: [1.00,1.01,1.02,1.04,1.05,1.06,1.07,1.09,1.10,1.11,1.13,1.14,
+           1.15,1.17,1.18,1.20,1.21,1.23,1.24,1.26,1.27,1.29,1.30,1.32,
+           1.33,1.35,1.37,1.38,1.40,1.42,1.43,1.45,1.47,1.49,1.50,1.52,
+           1.54,1.56,1.58,1.60,1.62,1.64,1.65,1.67,1.69,1.72,1.74,1.76,
+           1.78,1.80,1.82,1.84,1.87,1.89,1.91,1.93,1.96,1.98,2.00,2.03,
+           2.05,2.08,2.10,2.13,2.15,2.18,2.21,2.23,2.26,2.29,2.32,2.34,
+           2.37,2.40,2.43,2.46,2.49,2.52,2.55,2.58,2.61,2.64,2.67,2.71,
+           2.74,2.77,2.80,2.84,2.87,2.91,2.94,2.98,3.01,3.05,3.09,3.12,
+           3.16,3.20,3.24,3.28,3.32,3.36,3.40,3.44,3.48,3.52,3.57,3.61,
+           3.65,3.70,3.74,3.79,3.83,3.88,3.92,3.97,4.02,4.07,4.12,4.17,
+           4.22,4.27,4.32,4.37,4.42,4.48,4.53,4.59,4.64,4.70,4.75,4.81,
+           4.87,4.93,4.99,5.05,5.11,5.17,5.23,5.30,5.36,5.42,5.49,5.56,
+           5.62,5.69,5.76,5.83,5.90,5.97,6.04,6.12,6.19,6.26,6.34,6.42,
+           6.49,6.57,6.65,6.73,6.81,6.90,6.98,7.06,7.15,7.23,7.32,7.41,
+           7.50,7.59,7.68,7.77,7.87,7.96,8.06,8.16,8.25,8.35,8.45,8.56,
+           8.66,8.76,8.87,8.98,9.09,9.20,9.31,9.42,9.53,9.65,9.76,9.88]
+  };
+
+  const SERIES_DESC = {
+    E6:   "6 values per decade — coarse, high-tolerance applications.",
+    E12:  "12 values per decade — common general-purpose series (default).",
+    E24:  "24 values per decade — widely stocked, 5% spacing.",
+    E48:  "48 values per decade — precision 2% spacing.",
+    E96:  "96 values per decade — high-precision 1% spacing.",
+    E192: "192 values per decade — ultra-precision 0.5% spacing."
+  };
+
+  const SERIES_LABELS = {
+    E6:   'E6 — 6 values/decade (20% spacing)',
+    E12:  'E12 — 12 values/decade (10% spacing)',
+    E24:  'E24 — 24 values/decade (5% spacing)',
+    E48:  'E48 — 48 values/decade (2% spacing)',
+    E96:  'E96 — 96 values/decade (1% spacing)',
+    E192: 'E192 — 192 values/decade (0.5% spacing)',
+  };
+
+  const SLOW_SERIES = ['E48', 'E96', 'E192'];
+  const DECADES = [1, 10, 100, 1e3, 1e4, 1e5, 1e6, 1e7, 1e8];
+  const INF = Infinity;
+
+  // ── Unit-aware input parser ────────────────────────────────────────────────
+  function parseResistance(str) {
+    if (!str) return NaN;
+    str = str.trim().toLowerCase().replace(',', '.');
+    str = str.replace(/(\d)k(\d)/g, '$1.$2k')
+             .replace(/(\d)m(\d)/g, '$1.$2m')
+             .replace(/(\d)r(\d)/g, '$1.$2')
+             .replace(/(\d)g(\d)/g, '$1.$2g');
+    const match = str.match(/^([0-9.]+)\s*([kmgr]?)(?:ohm|ω|o)?$/);
+    if (!match) return NaN;
+    const val = parseFloat(match[1]);
+    switch (match[2]) {
+      case 'k': return val * 1e3;
+      case 'm': return val * 1e6;
+      case 'g': return val * 1e9;
+      case 'r':
+      case '':  return val;
+      default:  return NaN;
+    }
+  }
+
+  // ── Series UI ──────────────────────────────────────────────────────────────
+  function buildSeriesUI() {
+    const container = document.getElementById('seriesCheckboxes');
+    container.innerHTML = '';
+    for (const [name, enabledByDefault] of Object.entries(E_SERIES_ENABLED)) {
+      const lbl = document.createElement('label');
+      const cb  = document.createElement('input');
+      cb.type    = 'checkbox';
+      cb.value   = name;
+      cb.checked = enabledByDefault;
+      cb.id      = 'cb_' + name;
+      if (enabledByDefault) lbl.classList.add('active');
+      cb.addEventListener('change', () => {
+        lbl.classList.toggle('active', cb.checked);
+        rebuildDropdown();
+      });
+      lbl.appendChild(cb);
+      lbl.appendChild(document.createTextNode(' ' + name));
+      container.appendChild(lbl);
+    }
+    rebuildDropdown();
+  }
+
+  function rebuildDropdown() {
+    const enabled = Object.keys(E_SERIES_ENABLED)
+      .filter(name => document.getElementById('cb_' + name)?.checked);
+    if (enabled.length === 0) {
+      const fallback = document.getElementById('cb_E12');
+      if (fallback) {
+        fallback.checked = true;
+        fallback.closest('label').classList.add('active');
+        enabled.push('E12');
+      }
+    }
+    const sel = document.getElementById('eseries');
+    const selectRow = document.getElementById('seriesSelectRow');
+    const current = sel.value;
+    sel.innerHTML = '';
+    for (const name of enabled) {
+      const opt = document.createElement('option');
+      opt.value = name;
+      opt.textContent = SERIES_LABELS[name];
+      sel.appendChild(opt);
+    }
+    if (enabled.includes(current)) sel.value = current;
+    else if (enabled.includes(E_SERIES_DEFAULT)) sel.value = E_SERIES_DEFAULT;
+    else sel.value = enabled[0];
+    selectRow.style.display = enabled.length > 1 ? 'flex' : 'none';
+    updateSeriesInfo();
+  }
+
+  function updateSeriesInfo() {
+    const sel = document.getElementById('eseries');
+    if (!sel) return;
+    document.getElementById('seriesInfo').textContent = SERIES_DESC[sel.value];
+    document.getElementById('seriesWarning').style.display =
+      SLOW_SERIES.includes(sel.value) ? 'block' : 'none';
+  }
+
+  function buildValues(seriesName) {
+    const base = E_SERIES[seriesName];
+    const set = new Set();
+    for (const decade of DECADES)
+      for (const v of base)
+        set.add(Math.round(v * decade * 1e6) / 1e6);
+    set.add(0);
+    set.add(INF);
+    return Array.from(set).sort((a, b) => a - b);
+  }
+
+  // ── Physics helpers ────────────────────────────────────────────────────────
+  function parallel(a, b) {
+    if (a === 0 || b === 0) return 0;
+    if (a === INF) return b;
+    if (b === INF) return a;
+    return 1 / (1/a + 1/b);
+  }
+
+  function seriesAdd(a, b) {
+    const ra = a === INF ? 0 : a;
+    const rb = b === INF ? 0 : b;
+    return ra + rb;
+  }
+
+  // ── Optimised engine ───────────────────────────────────────────────────────
+  const W = 3;
+
+  function closestIdx(arr, target) {
+    if (arr.length === 0) return 0;
+    let lo = 0, hi = arr.length - 1;
+    while (lo < hi) {
+      const mid = (lo + hi) >> 1;
+      if (arr[mid] < target) lo = mid + 1;
+      else hi = mid;
+    }
+    if (lo > 0 && Math.abs(arr[lo-1] - target) < Math.abs(arr[lo] - target))
+      return lo - 1;
+    return lo;
+  }
+
+  function allParallelPairs(values) {
+    const pairs = [];
+    for (let i = 0; i < values.length; i++)
+      for (let j = i; j < values.length; j++) {
+        const val = parallel(values[i], values[j]);
+        if (isFinite(val)) pairs.push({ val, R1: values[i], R2: values[j] });
+      }
+    pairs.sort((a, b) => a.val - b.val);
+    return pairs;
+  }
+
+  function allSeriesPairs(values) {
+    const pairs = [];
+    for (let i = 0; i < values.length; i++)
+      for (let j = i; j < values.length; j++) {
+        const val = seriesAdd(values[i], values[j]);
+        pairs.push({ val, R1: values[i], R2: values[j] });
+      }
+    pairs.sort((a, b) => a.val - b.val);
+    return pairs;
+  }
+
+  function calcParallelOnly(values, target) {
+    const pairs = allParallelPairs(values);
+    const pairVals = pairs.map(p => p.val);
+    const idx = closestIdx(pairVals, target);
+    let best = { error: INF };
+    for (let k = Math.max(0, idx-W); k <= Math.min(pairs.length-1, idx+W); k++) {
+      const error = Math.abs(pairs[k].val - target);
+      if (error < best.error)
+        best = { R1: pairs[k].R1, R2: pairs[k].R2, total: pairs[k].val, error };
+    }
+    return best;
+  }
+
+  function calcParallelThree(values, target) {
+    const pairs = allParallelPairs(values);
+    const pairVals = pairs.map(p => p.val);
+    let best = { error: INF };
+    for (const R3 of values) {
+      if (R3 === 0) {
+        const error = Math.abs(0 - target);
+        if (error < best.error) best = { R1: 0, R2: 0, R3: 0, total: 0, error };
+        continue;
+      }
+      const r3inv = R3 === INF ? 0 : 1/R3;
+      const wantInv = target > 0 ? 1/target - r3inv : 0;
+      if (wantInv <= 0) {
+        const t = R3 === INF ? 0 : R3;
+        const error = Math.abs(t - target);
+        if (error < best.error) best = { R1: INF, R2: INF, R3, total: t, error };
+        continue;
+      }
+      const idx = closestIdx(pairVals, 1 / wantInv);
+      for (let k = Math.max(0, idx-W); k <= Math.min(pairs.length-1, idx+W); k++) {
+        const inv = (pairs[k].R1 === INF ? 0 : 1/pairs[k].R1)
+                  + (pairs[k].R2 === INF ? 0 : 1/pairs[k].R2)
+                  + r3inv;
+        const total = inv > 0 ? 1/inv : 0;
+        const error = Math.abs(total - target);
+        if (error < best.error)
+          best = { R1: pairs[k].R1, R2: pairs[k].R2, R3, total, error };
+      }
+    }
+    return best;
+  }
+
+  function calcSeriesOnly(values, target) {
+    const pairs = allSeriesPairs(values);
+    const pairVals = pairs.map(p => p.val);
+    const idx = closestIdx(pairVals, target);
+    let best = { error: INF };
+    for (let k = Math.max(0, idx-W); k <= Math.min(pairs.length-1, idx+W); k++) {
+      const error = Math.abs(pairs[k].val - target);
+      if (error < best.error)
+        best = { R1: pairs[k].R1, R2: pairs[k].R2, total: pairs[k].val, error };
+    }
+    return best;
+  }
+
+  function calcSeriesThree(values, target) {
+    const pairs = allSeriesPairs(values);
+    const pairVals = pairs.map(p => p.val);
+    const finiteValues = values.filter(v => isFinite(v));
+    let best = { error: INF };
+    for (const R3 of finiteValues) {
+      const idx = closestIdx(pairVals, target - R3);
+      for (let k = Math.max(0, idx-W); k <= Math.min(pairs.length-1, idx+W); k++) {
+        const total = pairs[k].val + R3;
+        const error = Math.abs(total - target);
+        if (error < best.error)
+          best = { R1: pairs[k].R1, R2: pairs[k].R2, R3, total, error };
+      }
+    }
+    return best;
+  }
+
+  function calcParallelPlusSeries(values, target) {
+    const pairs = allParallelPairs(values);
+    const finiteValues = values.filter(v => isFinite(v));
+    let best = { error: INF };
+    for (const p of pairs) {
+      const idx = closestIdx(finiteValues, Math.max(0, target - p.val));
+      for (let k = Math.max(0, idx-W); k <= Math.min(finiteValues.length-1, idx+W); k++) {
+        const total = p.val + finiteValues[k];
+        const error = Math.abs(total - target);
+        if (error < best.error)
+          best = { R1: p.R1, R2: p.R2, Rs: finiteValues[k], total, error };
+      }
+      const error0 = Math.abs(p.val - target);
+      if (error0 < best.error)
+        best = { R1: p.R1, R2: p.R2, Rs: INF, total: p.val, error: error0 };
+    }
+    return best;
+  }
+
+  function calcParallelParallel(values, target) {
+    const pairs = allParallelPairs(values);
+    const pairVals = pairs.map(p => p.val);
+    let best = { error: INF };
+    for (let i = 0; i < pairs.length; i++) {
+      const idx = closestIdx(pairVals, target - pairs[i].val);
+      for (let k = Math.max(0, idx-W); k <= Math.min(pairs.length-1, idx+W); k++) {
+        const total = pairs[i].val + pairs[k].val;
+        const error = Math.abs(total - target);
+        if (error < best.error)
+          best = { R1: pairs[i].R1, R2: pairs[i].R2,
+                   R3: pairs[k].R1, R4: pairs[k].R2, total, error };
+      }
+    }
+    return best;
+  }
+
+  // ── Formatting ─────────────────────────────────────────────────────────────
+  function fmtR(v) {
+    if (v === 0)   return '0 Ohm (jumper)';
+    if (v === INF) return 'open (not placed)';
+    if (v >= 1e9)  return (v/1e9).toFixed(3).replace(/\.?0+$/,'') + ' GOhm';
+    if (v >= 1e6)  return (v/1e6).toFixed(3).replace(/\.?0+$/,'') + ' MOhm';
+    if (v >= 1e3)  return (v/1e3).toFixed(3).replace(/\.?0+$/,'') + ' kOhm';
+    return v.toFixed(3).replace(/\.?0+$/,'') + ' Ohm';
+  }
+
+  function fmtRDisplay(v) {
+    if (v === 0)   return '0 Ω (jumper)';
+    if (v === INF) return '∞ (not placed)';
+    if (v >= 1e9)  return (v/1e9).toFixed(3).replace(/\.?0+$/,'') + ' GΩ';
+    if (v >= 1e6)  return (v/1e6).toFixed(3).replace(/\.?0+$/,'') + ' MΩ';
+    if (v >= 1e3)  return (v/1e3).toFixed(3).replace(/\.?0+$/,'') + ' kΩ';
+    return v.toFixed(3).replace(/\.?0+$/,'') + ' Ω';
+  }
+
+function fmtTotal(v, target = null) {
+    let str;
+    if (v === INF) str = '∞ Ω (open)';
+    else if (v >= 1e9) str = (v/1e9).toFixed(4) + ' GΩ';
+    else if (v >= 1e6) str = (v/1e6).toFixed(4) + ' MΩ';
+    else if (v >= 1e3) str = (v/1e3).toFixed(4) + ' kΩ';
+    else str = v.toFixed(4) + ' Ω';
+
+    if (target !== null && isFinite(target) && isFinite(v)) {
+      // Show target at full precision — no rounding
+      let tStr;
+      if      (target >= 1e9) tStr = parseFloat((target/1e9).toPrecision(10)).toString() + ' GΩ';
+      else if (target >= 1e6) tStr = parseFloat((target/1e6).toPrecision(10)).toString() + ' MΩ';
+      else if (target >= 1e3) tStr = parseFloat((target/1e3).toPrecision(10)).toString() + ' kΩ';
+      else                    tStr = parseFloat(target.toPrecision(10)).toString() + ' Ω';
+      str += ` <span style="color:#888;font-weight:normal">(Target: ${tStr})</span>`;
+    }
+    return str;
+  }
+
+  function fmtTotalPlain(v, target = null) {
+    let str;
+    if (v === INF) str = 'open';
+    else if (v >= 1e9) str = (v/1e9).toFixed(4) + ' GOhm';
+    else if (v >= 1e6) str = (v/1e6).toFixed(4) + ' MOhm';
+    else if (v >= 1e3) str = (v/1e3).toFixed(4) + ' kOhm';
+    else str = v.toFixed(4) + ' Ohm';
+
+    if (target !== null && isFinite(target) && isFinite(v)) {
+      let tStr;
+      if      (target >= 1e9) tStr = parseFloat((target/1e9).toPrecision(10)).toString() + ' GOhm';
+      else if (target >= 1e6) tStr = parseFloat((target/1e6).toPrecision(10)).toString() + ' MOhm';
+      else if (target >= 1e3) tStr = parseFloat((target/1e3).toPrecision(10)).toString() + ' kOhm';
+      else                    tStr = parseFloat(target.toPrecision(10)).toString() + ' Ohm';
+      str += ` (Target: ${tStr})`;
+    }
+    return str;
+  }
+
+  function fmtAbsErr(v) {
+    if (v >= 1e9)  return (v/1e9).toFixed(3).replace(/\.?0+$/,'') + ' GΩ';
+    if (v >= 1e6)  return (v/1e6).toFixed(3).replace(/\.?0+$/,'') + ' MΩ';
+    if (v >= 1e3)  return (v/1e3).toFixed(3).replace(/\.?0+$/,'') + ' kΩ';
+    return v.toFixed(3).replace(/\.?0+$/,'') + ' Ω';
+  }
+
+  function fmtAbsErrPlain(v) {
+    if (v >= 1e9)  return (v/1e9).toFixed(3).replace(/\.?0+$/,'') + ' GOhm';
+    if (v >= 1e6)  return (v/1e6).toFixed(3).replace(/\.?0+$/,'') + ' MOhm';
+    if (v >= 1e3)  return (v/1e3).toFixed(3).replace(/\.?0+$/,'') + ' kOhm';
+    return v.toFixed(3).replace(/\.?0+$/,'') + ' Ohm';
+  }
+
+  function fmtError(total, target) {
+    if (!isFinite(total) || !isFinite(target) || target === 0) return '—';
+    const pct    = ((total - target) / target) * 100;
+    const absErr = total - target;
+    const absPct = Math.abs(pct);
+    const cls    = absPct < 1 ? 'error-good' : absPct < 5 ? 'error-ok' : 'error-bad';
+    const pctStr = pct.toFixed(6).replace(/\.?0+$/, '') + '%';
+    const sign   = absErr >= 0 ? '+' : '-';
+    const absStr = sign + fmtAbsErr(Math.abs(absErr));
+    return `<span class="${cls}">${pctStr} &nbsp;(${absStr})</span>`;
+  }
+
+  function fmtErrorPlain(total, target) {
+    if (!isFinite(total) || !isFinite(target) || target === 0) return '--';
+    const pct    = ((total - target) / target) * 100;
+    const absErr = total - target;
+    const pctStr = pct.toFixed(6).replace(/\.?0+$/, '') + '%';
+    const sign   = absErr >= 0 ? '+' : '-';
+    return `${pctStr}  (${sign}${fmtAbsErrPlain(Math.abs(absErr))})`;
+  }
+
+  function lblRDisplay(v) {
+    if (v === 0)   return '0Ω';
+    if (v === INF) return '∞';
+    if (v >= 1e9)  return (v/1e9).toFixed(2).replace(/\.?0+$/,'') + 'G';
+    if (v >= 1e6)  return (v/1e6).toFixed(2).replace(/\.?0+$/,'') + 'M';
+    if (v >= 1e3)  return (v/1e3).toFixed(2).replace(/\.?0+$/,'') + 'k';
+    return v.toFixed(2).replace(/\.?0+$/,'') + 'Ω';
+  }
+
+  // ── Clipboard ──────────────────────────────────────────────────────────────
+  function copyCard(uid) {
+    const btn = document.getElementById(uid);
+    if (!btn) return;
+    const text = btn.dataset.clip;
+    const doFlash = () => {
+      btn.textContent = 'Copied!';
+      btn.classList.add('copied');
+      setTimeout(() => {
+        btn.textContent = 'Copy';
+        btn.classList.remove('copied');
+      }, 2000);
+    };
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(text).then(doFlash).catch(() => fallbackCopy(text, doFlash));
+    } else {
+      fallbackCopy(text, doFlash);
+    }
+  }
+
+  function fallbackCopy(text, cb) {
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.cssText = 'position:fixed;opacity:0';
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand('copy');
+    document.body.removeChild(ta);
+    cb();
+  }
+
+  // ── PDF Export ─────────────────────────────────────────────────────────────
+  function exportPDF() {
+    const targetRaw = document.getElementById('target').value.trim();
+    const output    = document.getElementById('output').innerHTML;
+    if (!output || output.includes('Calculating')) return;
+
+    const style = `
+      <style>
+        body { font-family: Arial, sans-serif; margin: 20px; font-size: 11pt; }
+        h1 { font-size: 14pt; margin-bottom: 4px; }
+        .subtitle { color: #555; font-size: 10pt; margin-bottom: 16px; }
+        .card-row { display: flex; gap: 12px; margin-bottom: 12px; }
+        .card { flex: 1; border-left: 4px solid #2255cc; background: #f0f4ff;
+                border-radius: 6px; padding: 10px 14px; }
+        .card.best-card { border-left-color: #1a7a1a; background: #f0fff0; }
+        .card h3 { margin: 0 0 8px 0; font-size: 11pt; color: #1a3a99; }
+        .card.best-card h3 { color: #1a5a1a; }
+        .best-badge { background: #1a7a1a; color: white; font-size: 8pt;
+                      padding: 1px 5px; border-radius: 3px; margin-left: 6px; }
+        table { border-collapse: collapse; width: 100%; font-size: 10pt; }
+        td { padding: 2px 5px; }
+        td:first-child { color: #555; width: 50%; }
+        td:last-child { font-weight: bold; }
+        .error-good { color: #1a7a1a; }
+        .error-ok   { color: #b07000; }
+        .error-bad  { color: #cc2222; }
+        .card-diagram svg { display: block; margin-bottom: 6px; }
+        .copy-btn   { display: none !important; }
+        .loading    { display: none !important; }
+        .wire  { stroke: #333; stroke-width: 1.8; fill: none; }
+        .res   { stroke: #2255cc; stroke-width: 1.8; fill: #dce8ff; }
+        .res-lbl { font-size: 9px; fill: #1a3a99; text-anchor: middle;
+                   font-family: Arial; font-weight: bold; }
+        .node  { fill: #333; }
+        .term  { stroke: #333; stroke-width: 2; fill: none; stroke-linecap: round; }
+      </style>`;
+
+    const seriesName = document.getElementById('eseries').value;
+    const win = window.open('', '_blank');
+    win.document.write(`
+      <!DOCTYPE html><html><head>
+      <title>Resistor Calculator — ${targetRaw}</title>
+      ${style}</head><body>
+      <h1>Resistor Combination Calculator</h1>
+      <div class="subtitle">
+        Target: <strong>${targetRaw}</strong>
+        &nbsp;|&nbsp; Series: <strong>${seriesName}</strong>
+        &nbsp;|&nbsp; ${new Date().toLocaleDateString()}
+      </div>
+      ${output}
+      <div style="margin-top:18px; padding:10px 14px; background:#fff8e1;
+                  border:1px solid #f0c040; border-radius:6px;
+                  font-size:9pt; color:#7a5c00;">
+        Always check the results and check-calculate them!
+      </div>
+      <script>window.onload = () => { window.print(); window.close(); }<\/script>
+      </body></html>`);
+    win.document.close();
+  }
+
+  // ── SVG helpers ────────────────────────────────────────────────────────────
+  function svgRes(cx, cy, label) {
+    const w = 28, h = 12;
+    return `
+      <rect x="${cx-w/2}" y="${cy-h/2}" width="${w}" height="${h}" rx="2" class="res"/>
+      <text x="${cx}" y="${cy+4}" class="res-lbl">${label}</text>`;
+  }
+
+  function svgDot(x, y) {
+    return `<circle cx="${x}" cy="${y}" r="2.5" class="node"/>`;
+  }
+
+  // ── SVG Circuits ───────────────────────────────────────────────────────────
+  function svgParallel(R1, R2) {
+    const ax=30, bx=150, ty=25, by=55, mid=90, my=(ty+by)/2;
+    return `<svg width="180" height="80" class="circuit-svg">
+      <line x1="${ax}" y1="${ty}" x2="${ax}" y2="${by}" class="wire"/>
+      <line x1="${bx}" y1="${ty}" x2="${bx}" y2="${by}" class="wire"/>
+      <line x1="${ax}" y1="${ty}" x2="${mid-14}" y2="${ty}" class="wire"/>
+      <line x1="${mid+14}" y1="${ty}" x2="${bx}" y2="${ty}" class="wire"/>
+      <line x1="${ax}" y1="${by}" x2="${mid-14}" y2="${by}" class="wire"/>
+      <line x1="${mid+14}" y1="${by}" x2="${bx}" y2="${by}" class="wire"/>
+      ${svgRes(mid, ty, lblRDisplay(R1))}
+      ${svgRes(mid, by, lblRDisplay(R2))}
+      <line x1="10"    y1="${my}" x2="${ax}"  y2="${my}" class="wire"/>
+      <line x1="${ax}" y1="${my}" x2="${ax}"  y2="${ty}"  class="wire"/>
+      <line x1="${ax}" y1="${my}" x2="${ax}"  y2="${by}"  class="wire"/>
+      <line x1="${bx}" y1="${ty}" x2="${bx}"  y2="${my}"  class="wire"/>
+      <line x1="${bx}" y1="${by}" x2="${bx}"  y2="${my}"  class="wire"/>
+      <line x1="${bx}" y1="${my}" x2="170"   y2="${my}"  class="wire"/>
+      ${svgDot(ax, my)}
+      ${svgDot(bx, my)}
+      <line x1="10"  y1="${my-6}" x2="10"  y2="${my+6}" class="term"/>
+      <line x1="170" y1="${my-6}" x2="170" y2="${my+6}" class="term"/>
+    </svg>`;
+  }
+
+  function svgParallelThree(R1, R2, R3) {
+    const ax=30, bx=150, ty=15, my=45, by=75, mid=90, endx=170;
+    return `<svg width="180" height="95" class="circuit-svg">
+      <line x1="${ax}" y1="${ty}" x2="${ax}" y2="${by}" class="wire"/>
+      <line x1="${bx}" y1="${ty}" x2="${bx}" y2="${by}" class="wire"/>
+      <line x1="${ax}" y1="${ty}" x2="${mid-14}" y2="${ty}" class="wire"/>
+      <line x1="${mid+14}" y1="${ty}" x2="${bx}" y2="${ty}" class="wire"/>
+      <line x1="${ax}" y1="${my}" x2="${mid-14}" y2="${my}" class="wire"/>
+      <line x1="${mid+14}" y1="${my}" x2="${bx}" y2="${my}" class="wire"/>
+      <line x1="${ax}" y1="${by}" x2="${mid-14}" y2="${by}" class="wire"/>
+      <line x1="${mid+14}" y1="${by}" x2="${bx}" y2="${by}" class="wire"/>
+      ${svgRes(mid, ty, lblRDisplay(R1))}
+      ${svgRes(mid, my, lblRDisplay(R2))}
+      ${svgRes(mid, by, lblRDisplay(R3))}
+      <line x1="10"    y1="${my}" x2="${ax}"   y2="${my}" class="wire"/>
+      <line x1="${ax}" y1="${ty}" x2="${ax}"   y2="${my}"  class="wire"/>
+      <line x1="${ax}" y1="${my}" x2="${ax}"   y2="${by}"  class="wire"/>
+      <line x1="${bx}" y1="${ty}" x2="${bx}"   y2="${my}"  class="wire"/>
+      <line x1="${bx}" y1="${my}" x2="${bx}"   y2="${by}"  class="wire"/>
+      <line x1="${bx}" y1="${my}" x2="${endx}" y2="${my}"  class="wire"/>
+      ${svgDot(ax, my)}
+      ${svgDot(bx, my)}
+      <line x1="10"      y1="${my-6}" x2="10"      y2="${my+6}" class="term"/>
+      <line x1="${endx}"  y1="${my-6}" x2="${endx}"  y2="${my+6}" class="term"/>
+    </svg>`;
+  }
+
+  function svgSeries(R1, R2) {
+    const y=20;
+    return `<svg width="200" height="40" class="circuit-svg">
+      <line x1="10"  y1="${y}" x2="46"  y2="${y}" class="wire"/>
+      ${svgRes(60,  y, lblRDisplay(R1))}
+      <line x1="74"  y1="${y}" x2="126" y2="${y}" class="wire"/>
+      ${svgRes(140, y, lblRDisplay(R2))}
+      <line x1="154" y1="${y}" x2="190" y2="${y}" class="wire"/>
+      <line x1="10"  y1="${y-6}" x2="10"  y2="${y+6}" class="term"/>
+      <line x1="190" y1="${y-6}" x2="190" y2="${y+6}" class="term"/>
+    </svg>`;
+  }
+
+  function svgSeriesThree(R1, R2, R3) {
+    const y=20;
+    return `<svg width="260" height="40" class="circuit-svg">
+      <line x1="10"  y1="${y}" x2="36"  y2="${y}" class="wire"/>
+      ${svgRes(50,  y, lblRDisplay(R1))}
+      <line x1="64"  y1="${y}" x2="96"  y2="${y}" class="wire"/>
+      ${svgRes(110, y, lblRDisplay(R2))}
+      <line x1="124" y1="${y}" x2="156" y2="${y}" class="wire"/>
+      ${svgRes(170, y, lblRDisplay(R3))}
+      <line x1="184" y1="${y}" x2="250" y2="${y}" class="wire"/>
+      <line x1="10"  y1="${y-6}" x2="10"  y2="${y+6}" class="term"/>
+      <line x1="250" y1="${y-6}" x2="250" y2="${y+6}" class="term"/>
+    </svg>`;
+  }
+
+  function svgParallelSeries(R1, R2, Rs) {
+    const ty=20, by=60, my=(ty+by)/2;
+    const ax=30, bx=150, mid=90;
+    const resX=205, endx=250;
+    return `<svg width="260" height="80" class="circuit-svg">
+      <line x1="${ax}" y1="${ty}" x2="${ax}" y2="${by}" class="wire"/>
+      <line x1="${bx}" y1="${ty}" x2="${bx}" y2="${by}" class="wire"/>
+      <line x1="${ax}" y1="${ty}" x2="${mid-14}" y2="${ty}" class="wire"/>
+      <line x1="${mid+14}" y1="${ty}" x2="${bx}" y2="${ty}" class="wire"/>
+      <line x1="${ax}" y1="${by}" x2="${mid-14}" y2="${by}" class="wire"/>
+      <line x1="${mid+14}" y1="${by}" x2="${bx}" y2="${by}" class="wire"/>
+      ${svgRes(mid, ty, lblRDisplay(R1))}
+      ${svgRes(mid, by, lblRDisplay(R2))}
+      <line x1="10"    y1="${my}" x2="${ax}"      y2="${my}" class="wire"/>
+      <line x1="${ax}" y1="${my}" x2="${ax}"      y2="${ty}"  class="wire"/>
+      <line x1="${ax}" y1="${my}" x2="${ax}"      y2="${by}"  class="wire"/>
+      <line x1="${bx}" y1="${ty}" x2="${bx}"      y2="${my}"  class="wire"/>
+      <line x1="${bx}" y1="${by}" x2="${bx}"      y2="${my}"  class="wire"/>
+      <line x1="${bx}" y1="${my}" x2="${resX-14}" y2="${my}"  class="wire"/>
+      ${svgRes(resX, my, lblRDisplay(Rs))}
+      <line x1="${resX+14}" y1="${my}" x2="${endx}" y2="${my}" class="wire"/>
+      ${svgDot(ax, my)}
+      ${svgDot(bx, my)}
+      <line x1="10"      y1="${my-6}" x2="10"      y2="${my+6}" class="term"/>
+      <line x1="${endx}"  y1="${my-6}" x2="${endx}"  y2="${my+6}" class="term"/>
+    </svg>`;
+  }
+
+  function svgParallelParallel(R1, R2, R3, R4) {
+    const ty=20, by=60, my=(ty+by)/2;
+    const ax1=30,  bx1=110, ax2=130, bx2=210;
+    const mid1=70, mid2=170, endx=250;
+    return `<svg width="260" height="80" class="circuit-svg">
+      <line x1="${ax1}" y1="${ty}" x2="${ax1}" y2="${by}" class="wire"/>
+      <line x1="${bx1}" y1="${ty}" x2="${bx1}" y2="${by}" class="wire"/>
+      <line x1="${ax1}" y1="${ty}" x2="${mid1-14}" y2="${ty}" class="wire"/>
+      <line x1="${mid1+14}" y1="${ty}" x2="${bx1}" y2="${ty}" class="wire"/>
+      <line x1="${ax1}" y1="${by}" x2="${mid1-14}" y2="${by}" class="wire"/>
+      <line x1="${mid1+14}" y1="${by}" x2="${bx1}" y2="${by}" class="wire"/>
+      ${svgRes(mid1, ty, lblRDisplay(R1))}
+      ${svgRes(mid1, by, lblRDisplay(R2))}
+      <line x1="${ax2}" y1="${ty}" x2="${ax2}" y2="${by}" class="wire"/>
+      <line x1="${bx2}" y1="${ty}" x2="${bx2}" y2="${by}" class="wire"/>
+      <line x1="${ax2}" y1="${ty}" x2="${mid2-14}" y2="${ty}" class="wire"/>
+      <line x1="${mid2+14}" y1="${ty}" x2="${bx2}" y2="${ty}" class="wire"/>
+      <line x1="${ax2}" y1="${by}" x2="${mid2-14}" y2="${by}" class="wire"/>
+      <line x1="${mid2+14}" y1="${by}" x2="${bx2}" y2="${by}" class="wire"/>
+      ${svgRes(mid2, ty, lblRDisplay(R3))}
+      ${svgRes(mid2, by, lblRDisplay(R4))}
+      <line x1="10"     y1="${my}" x2="${ax1}"  y2="${my}" class="wire"/>
+      <line x1="${ax1}" y1="${my}" x2="${ax1}"  y2="${ty}"  class="wire"/>
+      <line x1="${ax1}" y1="${my}" x2="${ax1}"  y2="${by}"  class="wire"/>
+      <line x1="${bx1}" y1="${ty}" x2="${bx1}"  y2="${my}"  class="wire"/>
+      <line x1="${bx1}" y1="${by}" x2="${bx1}"  y2="${my}"  class="wire"/>
+      <line x1="${bx1}" y1="${my}" x2="${ax2}"  y2="${my}"  class="wire"/>
+      <line x1="${ax2}" y1="${my}" x2="${ax2}"  y2="${ty}"  class="wire"/>
+      <line x1="${ax2}" y1="${my}" x2="${ax2}"  y2="${by}"  class="wire"/>
+      <line x1="${bx2}" y1="${ty}" x2="${bx2}"  y2="${my}"  class="wire"/>
+      <line x1="${bx2}" y1="${by}" x2="${bx2}"  y2="${my}"  class="wire"/>
+      <line x1="${bx2}" y1="${my}" x2="${endx}"  y2="${my}"  class="wire"/>
+      ${svgDot(ax1, my)}
+      ${svgDot(bx1, my)}
+      ${svgDot(ax2, my)}
+      ${svgDot(bx2, my)}
+      <line x1="10"      y1="${my-6}" x2="10"      y2="${my+6}" class="term"/>
+      <line x1="${endx}"  y1="${my-6}" x2="${endx}"  y2="${my+6}" class="term"/>
+    </svg>`;
+  }
+
+  // ── Card builder ───────────────────────────────────────────────────────────
+  function card(title, diagram, rows, totalR, target, isBest = false) {
+    const rowsHtml = rows.map(([label, val]) =>
+      `<tr><td>${label}</td><td>${fmtRDisplay(val)}</td></tr>`
+    ).join('');
+    const badge = isBest ? '<span class="best-badge">BEST</span>' : '';
+    const cls   = isBest ? 'card best-card' : 'card';
+    const uid   = 'copy_' + Math.random().toString(36).slice(2);
+
+    const plainRows = rows.map(([label, val]) => `  ${label}: ${fmtR(val)}`).join('\n');
+    const clipText  = [
+      title + (isBest ? ' [BEST]' : ''),
+      plainRows,
+      `  Total resistance: ${fmtTotalPlain(totalR, target)}`,
+      `  Error vs target:  ${fmtErrorPlain(totalR, target)}`,
+    ].join('\n');
+
+    return `
+      <div class="${cls}">
+        <h3>${title}${badge}</h3>
+        <div class="card-body">
+          <div class="card-diagram">${diagram}</div>
+          <div class="card-table">
+            <table>
+              ${rowsHtml}
+              <tr><td>Total resistance</td><td>${fmtTotal(totalR, target)}</td></tr>
+              <tr><td>Error vs target</td><td>${fmtError(totalR, target)}</td></tr>
+            </table>
+          </div>
+          <button class="copy-btn" id="${uid}"
+                  data-clip="${clipText.replace(/&/g,'&amp;').replace(/"/g,'&quot;')}"
+                  onclick="copyCard('${uid}')">
+            Copy
+          </button>
+        </div>
+      </div>`;
+  }
+
+  function cardRow(cardA, cardB) {
+    return `<div class="card-row">${cardA}${cardB}</div>`;
+  }
+
+  // ── Main calculate ─────────────────────────────────────────────────────────
+  function calculate() {
+    const raw    = document.getElementById('target').value;
+    const target = parseResistance(raw);
+    const out    = document.getElementById('output');
+
+    if (isNaN(target) || target < 0) {
+      out.innerHTML = '<p style="color:red">Please enter a valid resistance — e.g. 4700, 4k7, 4.7k, 1M, 100R.</p>';
+      return;
+    }
+
+    out.innerHTML = '<p class="loading">Calculating...</p>';
+
+    setTimeout(() => {
+      const values = buildValues(document.getElementById('eseries').value);
+      const par   = calcParallelOnly(values, target);
+      const par3  = calcParallelThree(values, target);
+      const ser   = calcSeriesOnly(values, target);
+      const ser3  = calcSeriesThree(values, target);
+      const combo = calcParallelPlusSeries(values, target);
+      const pp    = calcParallelParallel(values, target);
+
+      const results = { par, par3, ser, ser3, combo, pp };
+      const bestKey = Object.entries(results)
+        .reduce((a, [k, v]) => v.error < a[1].error ? [k, v] : a,
+                ['par', par])[0];
+
+      out.innerHTML =
+        cardRow(
+          card('2 Resistors in Parallel',
+            svgParallel(par.R1, par.R2),
+            [['R1', par.R1], ['R2', par.R2]],
+            par.total, target, bestKey === 'par'),
+          card('3 Resistors in Parallel',
+            svgParallelThree(par3.R1, par3.R2, par3.R3),
+            [['R1', par3.R1], ['R2', par3.R2], ['R3', par3.R3]],
+            par3.total, target, bestKey === 'par3')
+        ) +
+        cardRow(
+          card('2 Resistors in Series',
+            svgSeries(ser.R1, ser.R2),
+            [['R1', ser.R1], ['R2', ser.R2]],
+            ser.total, target, bestKey === 'ser'),
+          card('3 Resistors in Series',
+            svgSeriesThree(ser3.R1, ser3.R2, ser3.R3),
+            [['R1', ser3.R1], ['R2', ser3.R2], ['R3', ser3.R3]],
+            ser3.total, target, bestKey === 'ser3')
+        ) +
+        cardRow(
+          card('(2 Parallel) + 1 Series',
+            svgParallelSeries(combo.R1, combo.R2, combo.Rs),
+            [['R1 (parallel)', combo.R1], ['R2 (parallel)', combo.R2],
+             ['Rs (series)', combo.Rs]],
+            combo.total, target, bestKey === 'combo'),
+          card('(2 Parallel) + (2 Parallel)',
+            svgParallelParallel(pp.R1, pp.R2, pp.R3, pp.R4),
+            [['R1 (block 1)', pp.R1], ['R2 (block 1)', pp.R2],
+             ['R3 (block 2)', pp.R3], ['R4 (block 2)', pp.R4]],
+            pp.total, target, bestKey === 'pp')
+        );
+
+      document.getElementById('pdfBtn').style.display = 'inline-block';
+
+    }, 20);
+  }
+
+  // ── Init ───────────────────────────────────────────────────────────────────
+  buildSeriesUI();
+
+  document.getElementById('target').addEventListener('keydown', e => {
+    if (e.key === 'Enter') calculate();
+  });
+
+  document.getElementById('target').addEventListener('input', () => {
+    const inp = document.getElementById('target');
+    const val = parseResistance(inp.value);
+    if (inp.value.trim() === '') {
+      inp.className = 'input-empty';
+    } else if (isNaN(val) || val < 0) {
+      inp.className = 'input-invalid';
+    } else {
+      inp.className = 'input-valid';
+    }
+  });
+</script>
+</body>
+</html>
