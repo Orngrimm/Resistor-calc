@@ -2,7 +2,7 @@
 A simple calculator for ideal resistors for non standard values.  
 
 Want to run it directly from here?  
-https://rawcdn.githack.com/Orngrimm/Resistor-calc/main/Resistor-Calc%20V14.1.html
+https://rawcdn.githack.com/Orngrimm/Resistor-calc/main/Resistor-Calc%20V15.0.html
 
 Now with optimised calculations which let it calculate up to e192 (LOL!) in a reasonable time.  
 
