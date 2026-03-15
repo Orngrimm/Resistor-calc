@@ -2,9 +2,24 @@
 A simple calculator for ideal resistors for non standard values.  
 
 Want to run it directly from here?  
-https://rawcdn.githack.com/Orngrimm/Resistor-calc/main/Resistor-Calc%20V15.0.html
+https://rawcdn.githack.com/Orngrimm/Resistor-calc/main/Resistor-Calc%20V15.3.html
 
-Now with optimised calculations which let it calculate up to e192 (LOL!) in a reasonable time.  
+# Features
+Now with optimised calculations which let it calculate up to e192 (LOL!) in a reasonable time.*  
+Sports a copy-Button to quickly copy a solution as plaintext.  
+Now also with PDF-export!
+Best (and simplest of the best) solution is now marked.  
+Ontime-Evaluation for valid inputs of the target-resistance (Green/Red background of the field)  
+## *Calc-Improvements
+1. Sorted + early exit (biggest win for series)
+For series, sort values and binary-search for the best complement instead of looping. Reduces O(n²) to O(n log n).
+3. Precompute all parallel pairs (biggest win for parallel-heavy topologies)
+Instead of recomputing parallel(R1,R2) inside nested loops, precompute all unique parallel combinations into a flat array once. Then the (2par)+(2par) problem becomes two lookups into that array
+O(n²) instead of O(n⁴).
+5. Deduplicate pairs
+Since parallel(R1,R2) = parallel(R2,R1), only compute each pair once (upper triangle of the matrix).
+
+For E192 (~1750 values), (2par)+(2par) goes from ~9 billion iterations down to roughly 3 million — about 3000× faster. E192 should now calculate in well under 20 second.
 
 ## Circuits
 These circuits are available:  
