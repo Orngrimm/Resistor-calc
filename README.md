@@ -25,11 +25,12 @@ As an example, this leads to a maximum value with E12 of 820MOhm per single resi
 If you want to add your own e-Series, just add them in the SERIES_DESC and E_SERIES. You may even remove or add certain resistor values if you dont have them in stock or have special values at hand...
 
 ## Precision
-Fractions of Ohms (like 5.5 Ohm) are supported as target-values  
+Fractions of Ohms (like 5.5 Ohm) are supported as target-values.  
+If you enter the technical way (12k4 instead of 12400) please be aware that i only account for 1 decimal after the comma and will report it if there are more)
 
 # Warning
 The e-Series E48, 96 and 192 are VERY timeconsuming as the calculation work scales exponentially.
 E24 took me on a modern Laptop like 20sec. E48 was in the ballpark of quite some minutes. 
-The time for E96 was exactly LOL and for E192 ist was "Nice try! See you next year".  
+The time for E96 was exactly "LOL" and for E192 it was "Nice try! See you next year".  
 But honestly, you really need a precision like 1 femto-Ohm? Yeah... Thought so. Stick with E12 ;)
-
+I also preselected the e6-e24 to be available. If you want more, be my guest and activate them.
