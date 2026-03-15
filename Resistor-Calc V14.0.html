@@ -29,6 +29,55 @@
       border-radius: 5px;
       box-sizing: border-box;
     }
+    .series-checkboxes {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px 10px;
+      margin-bottom: 8px;
+    }
+    .series-checkboxes label {
+      font-weight: normal;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      cursor: pointer;
+      background: #f0f4ff;
+      border: 1px solid #ccd;
+      border-radius: 5px;
+      padding: 5px 10px;
+      font-size: 0.9rem;
+      user-select: none;
+      margin-bottom: 0;
+    }
+    .series-checkboxes label.active {
+      background: #2255cc;
+      color: white;
+      border-color: #2255cc;
+    }
+    .series-checkboxes input[type=checkbox] {
+      width: auto;
+      margin: 0;
+      accent-color: white;
+    }
+    .series-select-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-top: 8px;
+    }
+    .series-select-row label {
+      font-weight: bold;
+      margin-bottom: 0;
+      white-space: nowrap;
+    }
+    select#eseries {
+      width: auto;
+      min-width: 260px;
+      padding: 9px;
+      font-size: 1rem;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+    }
     .series-info { font-size: 0.82rem; color: #666; margin-top: 4px; }
     button {
       padding: 10px 28px;
@@ -41,8 +90,6 @@
     }
     button:hover { background: #1144aa; }
     #output { margin-top: 22px; }
-
-    /* Pair of cards side by side */
     .card-row {
       display: flex;
       gap: 14px;
@@ -52,7 +99,6 @@
       flex: 1;
       margin-bottom: 0;
     }
-
     .card {
       background: #f0f4ff;
       border-left: 4px solid #2255cc;
@@ -90,15 +136,12 @@
   <h1>Resistor Combination Calculator</h1>
 
   <div class="input-row">
-    <label for="eseries">E-Series:</label>
-    <select id="eseries" onchange="updateSeriesInfo()">
-      <option value="E6">E6 — 6 values/decade (20% tolerance)</option>
-      <option value="E12" selected>E12 — 12 values/decade (10% tolerance)</option>
-      <option value="E24">E24 — 24 values/decade (5% tolerance)</option>
-      <option value="E48">E48 — 48 values/decade (2% tolerance)</option>
-      <option value="E96">E96 — 96 values/decade (1% tolerance)</option>
-      <option value="E192">E192 — 192 values/decade (0.5% tolerance)</option>
-    </select>
+    <label>E-Series:</label>
+    <div class="series-checkboxes" id="seriesCheckboxes"></div>
+    <div id="seriesSelectRow" class="series-select-row" style="display:none;">
+      <label for="eseries">Active series:</label>
+      <select id="eseries" onchange="updateSeriesInfo()"></select>
+    </div>
     <div class="series-info" id="seriesInfo"></div>
   </div>
 
@@ -112,6 +155,22 @@
 </div>
 
 <script>
+  // ── E-series selection ─────────────────────────────────────────────────────
+  // true  = checkbox ticked by default
+  // false = checkbox unticked by default
+  const E_SERIES_ENABLED = {
+    E6:   true,
+    E12:  true,
+    E24:  true,
+    E48:  false,
+    E96:  false,
+    E192: false,
+  };
+
+  // Which series is pre-selected in the dropdown by default
+  const E_SERIES_DEFAULT = 'E12';
+
+  // ── E-series data ──────────────────────────────────────────────────────────
   const E_SERIES = {
     E6:   [1.0, 1.5, 2.2, 3.3, 4.7, 6.8],
     E12:  [1.0, 1.2, 1.5, 1.8, 2.2, 2.7, 3.3, 3.9, 4.7, 5.6, 6.8, 8.2],
@@ -156,8 +215,86 @@
     E192: "192 values per decade — ultra-precision 0.5% resistors."
   };
 
+  const SERIES_LABELS = {
+    E6:   'E6 — 6 values/decade (20% tolerance)',
+    E12:  'E12 — 12 values/decade (10% tolerance)',
+    E24:  'E24 — 24 values/decade (5% tolerance)',
+    E48:  'E48 — 48 values/decade (2% tolerance)',
+    E96:  'E96 — 96 values/decade (1% tolerance)',
+    E192: 'E192 — 192 values/decade (0.5% tolerance)',
+  };
+
   const DECADES = [1, 10, 100, 1e3, 1e4, 1e5, 1e6, 1e7, 1e8];
   const INF = Infinity;
+
+  // ── Series UI (checkboxes + dropdown) ─────────────────────────────────────
+  function buildSeriesUI() {
+    const container = document.getElementById('seriesCheckboxes');
+    container.innerHTML = '';
+    for (const [name, enabledByDefault] of Object.entries(E_SERIES_ENABLED)) {
+      const lbl = document.createElement('label');
+      const cb  = document.createElement('input');
+      cb.type    = 'checkbox';
+      cb.value   = name;
+      cb.checked = enabledByDefault;
+      cb.id      = 'cb_' + name;
+      if (enabledByDefault) lbl.classList.add('active');
+      cb.addEventListener('change', () => {
+        lbl.classList.toggle('active', cb.checked);
+        rebuildDropdown();
+      });
+      lbl.appendChild(cb);
+      lbl.appendChild(document.createTextNode(' ' + name));
+      container.appendChild(lbl);
+    }
+    rebuildDropdown();
+  }
+
+  function rebuildDropdown() {
+    const enabled = Object.keys(E_SERIES_ENABLED)
+      .filter(name => document.getElementById('cb_' + name)?.checked);
+
+    // Fallback: if nothing checked, force E12
+    if (enabled.length === 0) {
+      const fallback = document.getElementById('cb_E12');
+      if (fallback) {
+        fallback.checked = true;
+        fallback.closest('label').classList.add('active');
+        enabled.push('E12');
+      }
+    }
+
+    const sel = document.getElementById('eseries');
+    const selectRow = document.getElementById('seriesSelectRow');
+    const current = sel.value;
+    sel.innerHTML = '';
+
+    for (const name of enabled) {
+      const opt = document.createElement('option');
+      opt.value = name;
+      opt.textContent = SERIES_LABELS[name];
+      sel.appendChild(opt);
+    }
+
+    // Try to restore previous selection, else use default, else first available
+    if (enabled.includes(current)) {
+      sel.value = current;
+    } else if (enabled.includes(E_SERIES_DEFAULT)) {
+      sel.value = E_SERIES_DEFAULT;
+    } else {
+      sel.value = enabled[0];
+    }
+
+    // Show dropdown only if more than one series is enabled
+    selectRow.style.display = enabled.length > 1 ? 'flex' : 'none';
+
+    updateSeriesInfo();
+  }
+
+  function updateSeriesInfo() {
+    const sel = document.getElementById('eseries');
+    if (sel) document.getElementById('seriesInfo').textContent = SERIES_DESC[sel.value];
+  }
 
   function buildValues(seriesName) {
     const base = E_SERIES[seriesName];
@@ -170,6 +307,7 @@
     return Array.from(set).sort((a, b) => a - b);
   }
 
+  // ── Physics helpers ────────────────────────────────────────────────────────
   function parallel(a, b) {
     if (a === 0 || b === 0) return 0;
     if (a === INF) return b;
@@ -293,21 +431,25 @@
     return v.toFixed(4) + ' Ω';
   }
 
-function fmtError(total, target) {
-    if (!isFinite(total) || !isFinite(target) || target === 0) return '—';
-    const pct = ((total - target) / target) * 100;
-    const abs = Math.abs(pct);
-    const cls = abs < 1 ? 'error-good' : abs < 5 ? 'error-ok' : 'error-bad';
-
-    const pctStr = pct.toFixed(6).replace(/\.?0+$/, '') + '%';
-
-    const absErr = total - target;
-    const absStr = (absErr >= 0 ? '+' : '') + fmtR(Math.abs(absErr)).replace(' (jumper)', '').replace(' (not placed)', '') ;
-    const signedAbsStr = absErr < 0 ? '−' + fmtR(Math.abs(absErr)).replace(' (jumper)','').replace(' (not placed)','') : '+' + fmtR(Math.abs(absErr)).replace(' (jumper)','').replace(' (not placed)','');
-
-    return `<span class="${cls}">${pctStr} &nbsp;(${signedAbsStr})</span>`;
+  function fmtAbsErr(v) {
+    if (v >= 1e9)  return (v/1e9).toFixed(3).replace(/\.?0+$/,'') + ' GΩ';
+    if (v >= 1e6)  return (v/1e6).toFixed(3).replace(/\.?0+$/,'') + ' MΩ';
+    if (v >= 1e3)  return (v/1e3).toFixed(3).replace(/\.?0+$/,'') + ' kΩ';
+    return v.toFixed(3).replace(/\.?0+$/,'') + ' Ω';
   }
-  
+
+  function fmtError(total, target) {
+    if (!isFinite(total) || !isFinite(target) || target === 0) return '—';
+    const pct    = ((total - target) / target) * 100;
+    const absErr = total - target;
+    const absPct = Math.abs(pct);
+    const cls    = absPct < 1 ? 'error-good' : absPct < 5 ? 'error-ok' : 'error-bad';
+    const pctStr = pct.toFixed(6).replace(/\.?0+$/, '') + '%';
+    const sign   = absErr >= 0 ? '+' : '−';
+    const absStr = sign + fmtAbsErr(Math.abs(absErr));
+    return `<span class="${cls}">${pctStr} &nbsp;(${absStr})</span>`;
+  }
+
   function lblR(v) {
     if (v === 0)   return '0Ω';
     if (v === INF) return '∞';
@@ -503,12 +645,7 @@ function fmtError(total, target) {
     return `<div class="card-row">${cardA}${cardB}</div>`;
   }
 
-  // ── UI ─────────────────────────────────────────────────────────────────────
-  function updateSeriesInfo() {
-    const name = document.getElementById('eseries').value;
-    document.getElementById('seriesInfo').textContent = SERIES_DESC[name];
-  }
-
+  // ── Main calculate ─────────────────────────────────────────────────────────
   function calculate() {
     const target = parseFloat(document.getElementById('target').value);
     const out = document.getElementById('output');
@@ -562,8 +699,10 @@ function fmtError(total, target) {
 
     }, 20);
   }
-
-  updateSeriesInfo();
+  document.getElementById('target').addEventListener('keydown', e => {
+    if (e.key === 'Enter') calculate();
+  });
+  buildSeriesUI();
 </script>
 </body>
 </html>
