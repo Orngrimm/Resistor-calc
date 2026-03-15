@@ -8,10 +8,10 @@ Now with optimised calculations which let it calculate up to e192 (LOL!) in a re
 
 ## Circuits
 These circuits are available:  
-2 & 3 Reisitors in series  
-2 & 3 Reisitors in Parallel  
-(2 Parallel) + 1 in series  
-(2 Parallel) + (2 Parallel)  
+- 2 & 3 Resistors in series  
+- 2 & 3 Resistors in parallel  
+- (2 Parallel) + 1 in series  
+- (2 Parallel) + (2 parallel)  
 
 ## 0 and infinity?
 Jumpers (0 Ohm) and infinity (not placed resistors) are considered  
