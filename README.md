@@ -15,7 +15,7 @@ These circuits are available:
 Jumpers (0 Ohm) and infinity (not placed resistors) are considered  
 
 # User Interface
-![User Interface](https://github.com/Orngrimm/Resistor-calc/blob/main/Img/UI.png?raw=true)
+![User Interface](https://github.com/Orngrimm/Resistor-calc/blob/main/Img/UI.jpg?raw=true)
 
 # Limits
 The limit of the biggest resistor-Value can be adjusted in const DECADES where 1e8 = biggest single resistor would be (theoretically) 999MOhm (if your E-Series supports that).  
