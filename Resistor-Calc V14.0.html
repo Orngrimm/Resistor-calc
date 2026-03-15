@@ -21,7 +21,7 @@
     h1 { margin-top: 0; font-size: 1.4rem; }
     .input-row { margin-bottom: 14px; }
     label { font-weight: bold; display: block; margin-bottom: 4px; }
-    input[type=number], select {
+    input[type=text], select {
       width: 100%;
       padding: 9px;
       font-size: 1rem;
@@ -79,6 +79,16 @@
       border-radius: 5px;
     }
     .series-info { font-size: 0.82rem; color: #666; margin-top: 4px; }
+    .series-warning {
+      display: none;
+      margin-top: 8px;
+      padding: 8px 12px;
+      background: #fff3cd;
+      border: 1px solid #ffc107;
+      border-radius: 5px;
+      font-size: 0.85rem;
+      color: #856404;
+    }
     button {
       padding: 10px 28px;
       font-size: 1rem;
@@ -106,7 +116,23 @@
       padding: 14px 18px;
       margin-bottom: 14px;
     }
+    .card.best-card {
+      border-left: 4px solid #1a7a1a;
+      background: #f0fff0;
+    }
     .card h3 { margin: 0 0 10px 0; font-size: 1rem; color: #1a3a99; }
+    .card.best-card h3 { color: #1a5a1a; }
+    .best-badge {
+      display: inline-block;
+      background: #1a7a1a;
+      color: white;
+      font-size: 0.72rem;
+      font-weight: bold;
+      padding: 2px 7px;
+      border-radius: 4px;
+      margin-left: 8px;
+      vertical-align: middle;
+    }
     .card-body {
       display: flex;
       flex-direction: column;
@@ -143,11 +169,15 @@
       <select id="eseries" onchange="updateSeriesInfo()"></select>
     </div>
     <div class="series-info" id="seriesInfo"></div>
+    <div class="series-warning" id="seriesWarning">
+      ⚠️ <strong>Note:</strong> E48–E192 with complex topologies (4-resistor
+      combinations) can take several seconds to calculate.
+    </div>
   </div>
 
   <div class="input-row">
-    <label for="target">Target Resistance (Ω):</label>
-    <input type="number" id="target" step="any" placeholder="e.g. 1234" />
+    <label for="target">Target Resistance:</label>
+    <input type="text" id="target" placeholder="e.g. 4700 or 4k7 or 4.7k or 1M or 100R" />
   </div>
 
   <button onclick="calculate()">Calculate</button>
@@ -209,12 +239,12 @@
   const SERIES_DESC = {
     E6:   "6 values per decade — coarse, high-tolerance applications.",
     E12:  "12 values per decade — common general-purpose series (default).",
-    E24:  "24 values per decade — widely stocked, 5% tolerance.",
-    E48:  "48 values per decade — precision 2% resistors.",
-    E96:  "96 values per decade — high-precision 1% resistors.",
-    E192: "192 values per decade — ultra-precision 0.5% resistors."
+    E24:  "24 values per decade — widely stocked, 5% spacing.",
+    E48:  "48 values per decade — precision 2% spacing.",
+    E96:  "96 values per decade — high-precision 1% spacing.",
+    E192: "192 values per decade — ultra-precision 0.5% spacing."
   };
-  
+
   const SERIES_LABELS = {
     E6:   'E6 — 6 values/decade (20% spacing)',
     E12:  'E12 — 12 values/decade (10% spacing)',
@@ -224,10 +254,36 @@
     E192: 'E192 — 192 values/decade (0.5% spacing)',
   };
 
+  const SLOW_SERIES = ['E48', 'E96', 'E192'];
   const DECADES = [1, 10, 100, 1e3, 1e4, 1e5, 1e6, 1e7, 1e8];
   const INF = Infinity;
 
-  // ── Series UI (checkboxes + dropdown) ─────────────────────────────────────
+  // ── Unit-aware input parser ────────────────────────────────────────────────
+  function parseResistance(str) {
+    if (!str) return NaN;
+    str = str.trim().toLowerCase()
+             .replace(',', '.');         // allow comma decimal separator
+
+    // Handle resistor notation: 4k7 → 4.7k, 4m7 → 4.7m, 4r7 → 4.7, 4g7 → 4.7g
+    str = str.replace(/(\d)k(\d)/g, '$1.$2k')
+             .replace(/(\d)m(\d)/g, '$1.$2m')
+             .replace(/(\d)r(\d)/g, '$1.$2')
+             .replace(/(\d)g(\d)/g, '$1.$2g');
+
+    const match = str.match(/^([0-9.]+)\s*([kmgr]?)(?:ohm|ω|o)?$/);
+    if (!match) return NaN;
+    const val = parseFloat(match[1]);
+    switch (match[2]) {
+      case 'k': return val * 1e3;
+      case 'm': return val * 1e6;
+      case 'g': return val * 1e9;
+      case 'r':
+      case '':  return val;
+      default:  return NaN;
+    }
+  }
+
+  // ── Series UI ──────────────────────────────────────────────────────────────
   function buildSeriesUI() {
     const container = document.getElementById('seriesCheckboxes');
     container.innerHTML = '';
@@ -276,7 +332,7 @@
       sel.appendChild(opt);
     }
 
-    // Try to restore previous selection, else use default, else first available
+    // Restore previous selection, else use default, else first available
     if (enabled.includes(current)) {
       sel.value = current;
     } else if (enabled.includes(E_SERIES_DEFAULT)) {
@@ -285,7 +341,7 @@
       sel.value = enabled[0];
     }
 
-    // Show dropdown only if more than one series is enabled
+    // Show dropdown only if more than one series enabled
     selectRow.style.display = enabled.length > 1 ? 'flex' : 'none';
 
     updateSeriesInfo();
@@ -293,7 +349,10 @@
 
   function updateSeriesInfo() {
     const sel = document.getElementById('eseries');
-    if (sel) document.getElementById('seriesInfo').textContent = SERIES_DESC[sel.value];
+    if (!sel) return;
+    document.getElementById('seriesInfo').textContent = SERIES_DESC[sel.value];
+    document.getElementById('seriesWarning').style.display =
+      SLOW_SERIES.includes(sel.value) ? 'block' : 'none';
   }
 
   function buildValues(seriesName) {
@@ -621,13 +680,15 @@
   }
 
   // ── Card builder ───────────────────────────────────────────────────────────
-  function card(title, diagram, rows, totalR, target) {
+  function card(title, diagram, rows, totalR, target, isBest = false) {
     const rowsHtml = rows.map(([label, val]) =>
       `<tr><td>${label}</td><td>${fmtR(val)}</td></tr>`
     ).join('');
+    const badge = isBest ? '<span class="best-badge">★ BEST</span>' : '';
+    const cls   = isBest ? 'card best-card' : 'card';
     return `
-      <div class="card">
-        <h3>${title}</h3>
+      <div class="${cls}">
+        <h3>${title}${badge}</h3>
         <div class="card-body">
           <div class="card-diagram">${diagram}</div>
           <div class="card-table">
@@ -647,13 +708,17 @@
 
   // ── Main calculate ─────────────────────────────────────────────────────────
   function calculate() {
-    const target = parseFloat(document.getElementById('target').value);
-    const out = document.getElementById('output');
+    const raw    = document.getElementById('target').value;
+    const target = parseResistance(raw);
+    const out    = document.getElementById('output');
+
     if (isNaN(target) || target < 0) {
-      out.innerHTML = '<p style="color:red">Please enter a valid non-negative resistance value.</p>';
+      out.innerHTML = '<p style="color:red">Please enter a valid resistance — e.g. 4700, 4k7, 4.7k, 1M, 100R.</p>';
       return;
     }
+
     out.innerHTML = '<p class="loading">⏳ Calculating…</p>';
+
     setTimeout(() => {
       const values = buildValues(document.getElementById('eseries').value);
       const par   = calcParallelOnly(values, target);
@@ -663,46 +728,55 @@
       const combo = calcParallelPlusSeries(values, target);
       const pp    = calcParallelParallel(values, target);
 
+      // Determine best overall result
+      const results = { par, par3, ser, ser3, combo, pp };
+      const bestKey = Object.entries(results)
+        .reduce((a, [k, v]) => v.error < a[1].error ? [k, v] : a,
+                ['par', par])[0];
+
       out.innerHTML =
         cardRow(
           card('2 Resistors in Parallel',
             svgParallel(par.R1, par.R2),
             [['R1', par.R1], ['R2', par.R2]],
-            par.total, target),
+            par.total, target, bestKey === 'par'),
           card('3 Resistors in Parallel',
             svgParallelThree(par3.R1, par3.R2, par3.R3),
             [['R1', par3.R1], ['R2', par3.R2], ['R3', par3.R3]],
-            par3.total, target)
+            par3.total, target, bestKey === 'par3')
         ) +
         cardRow(
           card('2 Resistors in Series',
             svgSeries(ser.R1, ser.R2),
             [['R1', ser.R1], ['R2', ser.R2]],
-            ser.total, target),
+            ser.total, target, bestKey === 'ser'),
           card('3 Resistors in Series',
             svgSeriesThree(ser3.R1, ser3.R2, ser3.R3),
             [['R1', ser3.R1], ['R2', ser3.R2], ['R3', ser3.R3]],
-            ser3.total, target)
+            ser3.total, target, bestKey === 'ser3')
         ) +
         cardRow(
           card('(2 Parallel) + 1 Series',
             svgParallelSeries(combo.R1, combo.R2, combo.Rs),
             [['R1 (parallel)', combo.R1], ['R2 (parallel)', combo.R2],
              ['Rs (series)', combo.Rs]],
-            combo.total, target),
+            combo.total, target, bestKey === 'combo'),
           card('(2 Parallel) + (2 Parallel)',
             svgParallelParallel(pp.R1, pp.R2, pp.R3, pp.R4),
             [['R1 (block 1)', pp.R1], ['R2 (block 1)', pp.R2],
              ['R3 (block 2)', pp.R3], ['R4 (block 2)', pp.R4]],
-            pp.total, target)
+            pp.total, target, bestKey === 'pp')
         );
 
     }, 20);
   }
+
+  // ── Init ───────────────────────────────────────────────────────────────────
+  buildSeriesUI();
+
   document.getElementById('target').addEventListener('keydown', e => {
     if (e.key === 'Enter') calculate();
   });
-  buildSeriesUI();
 </script>
 </body>
 </html>
