@@ -136,13 +136,26 @@
       border-radius: 7px;
       padding: 14px 18px;
       margin-bottom: 14px;
+      position: relative;
     }
     .card.best-card {
       border-left: 4px solid #1a7a1a;
       background: #f0fff0;
     }
-    .card h3 { margin: 0 0 10px 0; font-size: 1rem; color: #1a3a99; }
+    .card h3 {
+      margin: 0 0 10px 0;
+      font-size: 1rem;
+      color: #1a3a99;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
     .card.best-card h3 { color: #1a5a1a; }
+    .h3-left {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
     .best-badge {
       display: inline-block;
       background: #1a7a1a;
@@ -151,9 +164,22 @@
       font-weight: bold;
       padding: 2px 7px;
       border-radius: 4px;
-      margin-left: 8px;
       vertical-align: middle;
     }
+    .rank-badge {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: #2255cc;
+      color: white;
+      font-size: 0.75rem;
+      font-weight: bold;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .card.best-card .rank-badge { background: #1a7a1a; }
     .card-body {
       display: flex;
       flex-direction: column;
@@ -185,6 +211,15 @@
     .copy-btn.copied { background: #1a7a1a; }
     .card.best-card .copy-btn { background: #1a7a1a; }
     .card.best-card .copy-btn:hover { background: #145a14; }
+    .disclaimer {
+      margin-top: 18px;
+      padding: 10px 14px;
+      background: #fff8e1;
+      border: 1px solid #f0c040;
+      border-radius: 6px;
+      font-size: 0.85rem;
+      color: #7a5c00;
+    }
     .wire    { stroke: #333; stroke-width: 1.8; fill: none; }
     .res     { stroke: #2255cc; stroke-width: 1.8; fill: #dce8ff; }
     .res-lbl { font-size: 9px; fill: #1a3a99; text-anchor: middle;
@@ -222,11 +257,12 @@
   </div>
 
   <div id="output"></div>
-  <div style="margin-top:18px; padding:10px 14px; background:#fff8e1;
-              border:1px solid #f0c040; border-radius:6px;
-              font-size:0.85rem; color:#7a5c00;">
+
+  <div class="disclaimer">
     ⚠️ Always check the results and check-calculate them!
   </div>
+</div>
+
 <script>
   // ── E-series selection ─────────────────────────────────────────────────────
   // true  = checkbox ticked by default
@@ -574,7 +610,7 @@
     return v.toFixed(3).replace(/\.?0+$/,'') + ' Ω';
   }
 
-function fmtTotal(v, target = null) {
+  function fmtTotal(v, target = null) {
     let str;
     if (v === INF) str = '∞ Ω (open)';
     else if (v >= 1e9) str = (v/1e9).toFixed(4) + ' GΩ';
@@ -583,7 +619,6 @@ function fmtTotal(v, target = null) {
     else str = v.toFixed(4) + ' Ω';
 
     if (target !== null && isFinite(target) && isFinite(v)) {
-      // Show target at full precision — no rounding
       let tStr;
       if      (target >= 1e9) tStr = parseFloat((target/1e9).toPrecision(10)).toString() + ' GΩ';
       else if (target >= 1e6) tStr = parseFloat((target/1e6).toPrecision(10)).toString() + ' MΩ';
@@ -703,10 +738,17 @@ function fmtTotal(v, target = null) {
         .card { flex: 1; border-left: 4px solid #2255cc; background: #f0f4ff;
                 border-radius: 6px; padding: 10px 14px; }
         .card.best-card { border-left-color: #1a7a1a; background: #f0fff0; }
-        .card h3 { margin: 0 0 8px 0; font-size: 11pt; color: #1a3a99; }
+        .card h3 { margin: 0 0 8px 0; font-size: 11pt; color: #1a3a99;
+                   display: flex; align-items: center; justify-content: space-between; }
         .card.best-card h3 { color: #1a5a1a; }
+        .h3-left { display: flex; align-items: center; gap: 6px; }
         .best-badge { background: #1a7a1a; color: white; font-size: 8pt;
-                      padding: 1px 5px; border-radius: 3px; margin-left: 6px; }
+                      padding: 1px 5px; border-radius: 3px; }
+        .rank-badge { width: 20px; height: 20px; border-radius: 50%;
+                      background: #2255cc; color: white; font-size: 8pt;
+                      font-weight: bold; text-align: center; line-height: 20px;
+                      display: inline-block; flex-shrink: 0; }
+        .card.best-card .rank-badge { background: #1a7a1a; }
         table { border-collapse: collapse; width: 100%; font-size: 10pt; }
         td { padding: 2px 5px; }
         td:first-child { color: #555; width: 50%; }
@@ -717,6 +759,9 @@ function fmtTotal(v, target = null) {
         .card-diagram svg { display: block; margin-bottom: 6px; }
         .copy-btn   { display: none !important; }
         .loading    { display: none !important; }
+        .disclaimer { margin-top: 18px; padding: 10px 14px; background: #fff8e1;
+                      border: 1px solid #f0c040; border-radius: 6px;
+                      font-size: 9pt; color: #7a5c00; }
         .wire  { stroke: #333; stroke-width: 1.8; fill: none; }
         .res   { stroke: #2255cc; stroke-width: 1.8; fill: #dce8ff; }
         .res-lbl { font-size: 9px; fill: #1a3a99; text-anchor: middle;
@@ -738,9 +783,7 @@ function fmtTotal(v, target = null) {
         &nbsp;|&nbsp; ${new Date().toLocaleDateString()}
       </div>
       ${output}
-      <div style="margin-top:18px; padding:10px 14px; background:#fff8e1;
-                  border:1px solid #f0c040; border-radius:6px;
-                  font-size:9pt; color:#7a5c00;">
+      <div class="disclaimer">
         Always check the results and check-calculate them!
       </div>
       <script>window.onload = () => { window.print(); window.close(); }<\/script>
@@ -910,17 +953,20 @@ function fmtTotal(v, target = null) {
   }
 
   // ── Card builder ───────────────────────────────────────────────────────────
-  function card(title, diagram, rows, totalR, target, isBest = false) {
+  function card(title, diagram, rows, totalR, target, isBest = false, rank = 0) {
     const rowsHtml = rows.map(([label, val]) =>
       `<tr><td>${label}</td><td>${fmtRDisplay(val)}</td></tr>`
     ).join('');
-    const badge = isBest ? '<span class="best-badge">BEST</span>' : '';
-    const cls   = isBest ? 'card best-card' : 'card';
-    const uid   = 'copy_' + Math.random().toString(36).slice(2);
+    const badge     = isBest ? '<span class="best-badge">BEST</span>' : '';
+    const rankBadge = rank > 0
+      ? `<span class="rank-badge">${rank}.</span>`
+      : '';
+    const cls = isBest ? 'card best-card' : 'card';
+    const uid = 'copy_' + Math.random().toString(36).slice(2);
 
     const plainRows = rows.map(([label, val]) => `  ${label}: ${fmtR(val)}`).join('\n');
     const clipText  = [
-      title + (isBest ? ' [BEST]' : ''),
+      `#${rank} ` + title + (isBest ? ' [BEST]' : ''),
       plainRows,
       `  Total resistance: ${fmtTotalPlain(totalR, target)}`,
       `  Error vs target:  ${fmtErrorPlain(totalR, target)}`,
@@ -928,7 +974,10 @@ function fmtTotal(v, target = null) {
 
     return `
       <div class="${cls}">
-        <h3>${title}${badge}</h3>
+        <h3>
+          <span class="h3-left">${title}${badge}</span>
+          ${rankBadge}
+        </h3>
         <div class="card-body">
           <div class="card-diagram">${diagram}</div>
           <div class="card-table">
@@ -974,42 +1023,49 @@ function fmtTotal(v, target = null) {
       const pp    = calcParallelParallel(values, target);
 
       const results = { par, par3, ser, ser3, combo, pp };
+
+      // Determine best and ranks
       const bestKey = Object.entries(results)
         .reduce((a, [k, v]) => v.error < a[1].error ? [k, v] : a,
                 ['par', par])[0];
+
+      const ranked = Object.entries(results)
+        .sort((a, b) => a[1].error - b[1].error)
+        .map(([k], i) => [k, i + 1]);
+      const rankMap = Object.fromEntries(ranked);
 
       out.innerHTML =
         cardRow(
           card('2 Resistors in Parallel',
             svgParallel(par.R1, par.R2),
             [['R1', par.R1], ['R2', par.R2]],
-            par.total, target, bestKey === 'par'),
+            par.total, target, bestKey === 'par', rankMap['par']),
           card('3 Resistors in Parallel',
             svgParallelThree(par3.R1, par3.R2, par3.R3),
             [['R1', par3.R1], ['R2', par3.R2], ['R3', par3.R3]],
-            par3.total, target, bestKey === 'par3')
+            par3.total, target, bestKey === 'par3', rankMap['par3'])
         ) +
         cardRow(
           card('2 Resistors in Series',
             svgSeries(ser.R1, ser.R2),
             [['R1', ser.R1], ['R2', ser.R2]],
-            ser.total, target, bestKey === 'ser'),
+            ser.total, target, bestKey === 'ser', rankMap['ser']),
           card('3 Resistors in Series',
             svgSeriesThree(ser3.R1, ser3.R2, ser3.R3),
             [['R1', ser3.R1], ['R2', ser3.R2], ['R3', ser3.R3]],
-            ser3.total, target, bestKey === 'ser3')
+            ser3.total, target, bestKey === 'ser3', rankMap['ser3'])
         ) +
         cardRow(
           card('(2 Parallel) + 1 Series',
             svgParallelSeries(combo.R1, combo.R2, combo.Rs),
             [['R1 (parallel)', combo.R1], ['R2 (parallel)', combo.R2],
              ['Rs (series)', combo.Rs]],
-            combo.total, target, bestKey === 'combo'),
+            combo.total, target, bestKey === 'combo', rankMap['combo']),
           card('(2 Parallel) + (2 Parallel)',
             svgParallelParallel(pp.R1, pp.R2, pp.R3, pp.R4),
             [['R1 (block 1)', pp.R1], ['R2 (block 1)', pp.R2],
              ['R3 (block 2)', pp.R3], ['R4 (block 2)', pp.R4]],
-            pp.total, target, bestKey === 'pp')
+            pp.total, target, bestKey === 'pp', rankMap['pp'])
         );
 
       document.getElementById('pdfBtn').style.display = 'inline-block';
