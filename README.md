@@ -5,11 +5,12 @@ Want to run it directly from here?
 https://rawcdn.githack.com/Orngrimm/Resistor-calc/main/Resistor-Calc%20V15.7.html
 
 # Features
-Now with optimised calculations which let it calculate up to e192 (LOL!) in a reasonable time.*  
-Sports a copy-Button to quickly copy a solution as plaintext.  
-Now also with PDF-export!
-Best (and simplest of the best) solution is now marked.  
-Ontime-Evaluation for valid inputs of the target-resistance (Green/Red background of the field)  
+- Now with optimised calculations which let it calculate up to e192 (LOL!) in a reasonable time.*  
+- Sports a copy-Button to quickly copy a solution as plaintext.  
+- Now also with PDF-export!
+- optional Stop-Point for precision (Do you really need 0.0001% precision or +/-0.12mOhm?)
+- Ontime-Evaluation for valid inputs of the target-resistance (Green/Red background of the field)
+
 ## *Calc-Improvements
 1. Sorted + early exit (biggest win for series)
 For series, sort values and binary-search for the best complement instead of looping. Reduces O(n²) to O(n log n).
