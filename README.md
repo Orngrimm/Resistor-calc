@@ -25,6 +25,7 @@ For E192 (~1750 values), (2par)+(2par) goes from ~9 billion iterations down to r
 One normally does not need 0.00001% and 0.001mOhm precision... You can now specify a %-Presision it stops at (each curcuit individually) as soon as it found a combo which surpasses the precision.
 TO not use this limit, simply have "0" in it (Default).
 ## Badges 
+- "Stopped" = the precision limiter was set to >0 and a solution was found for this circuit for that value within the precision desired. This is not the best possible, but it fits the precision requirement you set
 - "Simplest" = A precision limit was set and this solution uses the least resistors to get to the result within the requested precision. Parallel prefered over serial.
 - "Good enough" = if a precision limit was set, this bade marks the best solution within this limitation.
 - "Best" = this is the absolute best precision solution. Only available if no limiter was set 
