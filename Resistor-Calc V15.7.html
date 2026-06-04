@@ -1008,16 +1008,16 @@
     </svg>`;
   }
 
-  function card(title, badges, diagram, rows, totalR, target, isBest = false, rank = 0) {
+  function card(title, badges, diagram, rows, totalR, target, isBest = false, rank = 0, isGoodEnough = false) {
     const rowsHtml = rows.map(([label, val]) =>
       `<tr><td>${label}</td><td>${fmtRDisplay(val)}</td></tr>`
     ).join('');
     
     // Build display badges HTML
     const badgeColors = {
-      'Simplest': '#1a7a1a',
+      'Simplest': '#2255cc',
       'Best': '#1a7a1a',
-      'Good enough': '#2255cc',
+      'Good enough': '#1a7a1a',
       'STOPPED': '#cc8800'
     };
     const badgeHtml = badges.map(b =>
@@ -1027,7 +1027,7 @@
     const rankBadge = rank > 0
       ? `<span class="rank-badge">${rank}.</span>`
       : '';
-    const cls = isBest ? 'card best-card' : 'card';
+    const cls = (isBest || isGoodEnough) ? 'card best-card' : 'card';
     const uid = 'copy_' + Math.random().toString(36).slice(2);
 
     const plainRows = rows.map(([label, val]) => `  ${label}: ${fmtR(val)}`).join('\n');
@@ -1122,9 +1122,9 @@
         : null;
 
       // The "best-card" green border goes to:
-      // - "Simplest" when precision > 0
-      // - "Best" (lowest error) when precision = 0
-      const bestCardKey = useThreshold ? simplestKey : bestErrorKey;
+      // - "Good enough" (lowest error within threshold) when precision > 0
+      // - "Best" (lowest error overall) when precision = 0
+      const bestCardKey = useThreshold ? bestErrorKey : bestErrorKey;
 
       const ranked = Object.entries(results)
         .sort((a, b) => a[1].error - b[1].error)
@@ -1150,24 +1150,24 @@
             getBadges('par'),
             svgParallel(par.R1, par.R2),
             [['R1', par.R1], ['R2', par.R2]],
-            par.total, target, bestCardKey === 'par', rankMap['par']),
+            par.total, target, bestCardKey === 'par', rankMap['par'], bestErrorKey === 'par'),
           card('3 Resistors in Parallel',
             getBadges('par3'),
             svgParallelThree(par3.R1, par3.R2, par3.R3),
             [['R1', par3.R1], ['R2', par3.R2], ['R3', par3.R3]],
-            par3.total, target, bestCardKey === 'par3', rankMap['par3'])
+            par3.total, target, bestCardKey === 'par3', rankMap['par3'], bestErrorKey === 'par3')
         ) +
         cardRow(
           card('2 Resistors in Series',
             getBadges('ser'),
             svgSeries(ser.R1, ser.R2),
             [['R1', ser.R1], ['R2', ser.R2]],
-            ser.total, target, bestCardKey === 'ser', rankMap['ser']),
+            ser.total, target, bestCardKey === 'ser', rankMap['ser'], bestErrorKey === 'ser'),
           card('3 Resistors in Series',
             getBadges('ser3'),
             svgSeriesThree(ser3.R1, ser3.R2, ser3.R3),
             [['R1', ser3.R1], ['R2', ser3.R2], ['R3', ser3.R3]],
-            ser3.total, target, bestCardKey === 'ser3', rankMap['ser3'])
+            ser3.total, target, bestCardKey === 'ser3', rankMap['ser3'], bestErrorKey === 'ser3')
         ) +
         cardRow(
           card('(2 Parallel) + 1 Series',
@@ -1175,13 +1175,13 @@
             svgParallelSeries(combo.R1, combo.R2, combo.Rs),
             [['R1 (parallel)', combo.R1], ['R2 (parallel)', combo.R2],
              ['Rs (series)', combo.Rs]],
-            combo.total, target, bestCardKey === 'combo', rankMap['combo']),
+            combo.total, target, bestCardKey === 'combo', rankMap['combo'], bestErrorKey === 'combo'),
           card('(2 Parallel) + (2 Parallel)',
             getBadges('pp'),
             svgParallelParallel(pp.R1, pp.R2, pp.R3, pp.R4),
             [['R1 (block 1)', pp.R1], ['R2 (block 1)', pp.R2],
              ['R3 (block 2)', pp.R3], ['R4 (block 2)', pp.R4]],
-            pp.total, target, bestCardKey === 'pp', rankMap['pp'])
+            pp.total, target, bestCardKey === 'pp', rankMap['pp'], bestErrorKey === 'pp')
         );
 
       document.getElementById('pdfBtn').style.display = 'inline-block';
