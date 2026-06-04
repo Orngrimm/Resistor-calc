@@ -226,6 +226,40 @@
                font-family: Arial; font-weight: bold; }
     .node    { fill: #333; }
     .term    { stroke: #333; stroke-width: 2; fill: none; stroke-linecap: round; }
+    .precision-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-top: 4px;
+    }
+    .precision-row label {
+      font-weight: bold;
+      margin-bottom: 0;
+      white-space: nowrap;
+    }
+    input[type=number]#precision {
+      width: 100px;
+      padding: 9px;
+      font-size: 1rem;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      box-sizing: border-box;
+    }
+    .precision-info {
+      font-size: 0.82rem;
+      color: #666;
+    }
+    .stopped-badge {
+      display: inline-block;
+      background: #cc8800;
+      color: white;
+      font-size: 0.65rem;
+      font-weight: bold;
+      padding: 1px 5px;
+      border-radius: 3px;
+      margin-left: 6px;
+      vertical-align: middle;
+    }
   </style>
 </head>
 <body>
@@ -251,6 +285,14 @@
            placeholder="e.g. 4700 or 4k7 or 4.7k or 1M or 100R" />
   </div>
 
+  <div class="input-row">
+    <label for="precision">Stop at precision (%):</label>
+    <div class="precision-row">
+      <input type="number" id="precision" value="0" min="0" step="0.001" />
+      <span class="precision-info">0 = find most precise solution for each schematic. &gt;0 = stop when error is within this threshold.</span>
+    </div>
+  </div>
+
   <div class="button-row">
     <button onclick="calculate()">Calculate</button>
     <button id="pdfBtn" onclick="exportPDF()">Export PDF</button>
@@ -264,9 +306,6 @@
 </div>
 
 <script>
-  // ── E-series selection ─────────────────────────────────────────────────────
-  // true  = checkbox ticked by default
-  // false = checkbox unticked by default
   const E_SERIES_ENABLED = {
     E6:   true,
     E12:  true,
@@ -276,10 +315,8 @@
     E192: false,
   };
 
-  // Which series is pre-selected in the dropdown by default
   const E_SERIES_DEFAULT = 'E12';
 
-  // ── E-series data ──────────────────────────────────────────────────────────
   const E_SERIES = {
     E6:   [1.0, 1.5, 2.2, 3.3, 4.7, 6.8],
     E12:  [1.0, 1.2, 1.5, 1.8, 2.2, 2.7, 3.3, 3.9, 4.7, 5.6, 6.8, 8.2],
@@ -337,7 +374,6 @@
   const DECADES = [1, 10, 100, 1e3, 1e4, 1e5, 1e6, 1e7, 1e8];
   const INF = Infinity;
 
-  // ── Unit-aware input parser ────────────────────────────────────────────────
   function parseResistance(str) {
     if (!str) return NaN;
     str = str.trim().toLowerCase().replace(',', '.');
@@ -358,7 +394,6 @@
     }
   }
 
-  // ── Series UI ──────────────────────────────────────────────────────────────
   function buildSeriesUI() {
     const container = document.getElementById('seriesCheckboxes');
     container.innerHTML = '';
@@ -428,7 +463,6 @@
     return Array.from(set).sort((a, b) => a - b);
   }
 
-  // ── Physics helpers ────────────────────────────────────────────────────────
   function parallel(a, b) {
     if (a === 0 || b === 0) return 0;
     if (a === INF) return b;
@@ -442,7 +476,6 @@
     return ra + rb;
   }
 
-  // ── Optimised engine ───────────────────────────────────────────────────────
   const W = 3;
 
   function closestIdx(arr, target) {
@@ -480,7 +513,7 @@
     return pairs;
   }
 
-  function calcParallelOnly(values, target) {
+  function calcParallelOnly(values, target, threshold = 0) {
     const pairs = allParallelPairs(values);
     const pairVals = pairs.map(p => p.val);
     const idx = closestIdx(pairVals, target);
@@ -489,15 +522,20 @@
       const error = Math.abs(pairs[k].val - target);
       if (error < best.error)
         best = { R1: pairs[k].R1, R2: pairs[k].R2, total: pairs[k].val, error };
+      if (threshold > 0 && best.error <= threshold) {
+        best.stopped = true;
+        break;
+      }
     }
     return best;
   }
 
-  function calcParallelThree(values, target) {
+  function calcParallelThree(values, target, threshold = 0) {
     const pairs = allParallelPairs(values);
     const pairVals = pairs.map(p => p.val);
     let best = { error: INF };
     for (const R3 of values) {
+      if (threshold > 0 && best.error <= threshold) break;
       if (R3 === 0) {
         const error = Math.abs(0 - target);
         if (error < best.error) best = { R1: 0, R2: 0, R3: 0, total: 0, error };
@@ -520,12 +558,16 @@
         const error = Math.abs(total - target);
         if (error < best.error)
           best = { R1: pairs[k].R1, R2: pairs[k].R2, R3, total, error };
+        if (threshold > 0 && best.error <= threshold) {
+          best.stopped = true;
+          break;
+        }
       }
     }
     return best;
   }
 
-  function calcSeriesOnly(values, target) {
+  function calcSeriesOnly(values, target, threshold = 0) {
     const pairs = allSeriesPairs(values);
     const pairVals = pairs.map(p => p.val);
     const idx = closestIdx(pairVals, target);
@@ -534,38 +576,52 @@
       const error = Math.abs(pairs[k].val - target);
       if (error < best.error)
         best = { R1: pairs[k].R1, R2: pairs[k].R2, total: pairs[k].val, error };
+      if (threshold > 0 && best.error <= threshold) {
+        best.stopped = true;
+        break;
+      }
     }
     return best;
   }
 
-  function calcSeriesThree(values, target) {
+  function calcSeriesThree(values, target, threshold = 0) {
     const pairs = allSeriesPairs(values);
     const pairVals = pairs.map(p => p.val);
     const finiteValues = values.filter(v => isFinite(v));
     let best = { error: INF };
     for (const R3 of finiteValues) {
+      if (threshold > 0 && best.error <= threshold) break;
       const idx = closestIdx(pairVals, target - R3);
       for (let k = Math.max(0, idx-W); k <= Math.min(pairs.length-1, idx+W); k++) {
         const total = pairs[k].val + R3;
         const error = Math.abs(total - target);
         if (error < best.error)
           best = { R1: pairs[k].R1, R2: pairs[k].R2, R3, total, error };
+        if (threshold > 0 && best.error <= threshold) {
+          best.stopped = true;
+          break;
+        }
       }
     }
     return best;
   }
 
-  function calcParallelPlusSeries(values, target) {
+  function calcParallelPlusSeries(values, target, threshold = 0) {
     const pairs = allParallelPairs(values);
     const finiteValues = values.filter(v => isFinite(v));
     let best = { error: INF };
     for (const p of pairs) {
+      if (threshold > 0 && best.error <= threshold) break;
       const idx = closestIdx(finiteValues, Math.max(0, target - p.val));
       for (let k = Math.max(0, idx-W); k <= Math.min(finiteValues.length-1, idx+W); k++) {
         const total = p.val + finiteValues[k];
         const error = Math.abs(total - target);
         if (error < best.error)
           best = { R1: p.R1, R2: p.R2, Rs: finiteValues[k], total, error };
+        if (threshold > 0 && best.error <= threshold) {
+          best.stopped = true;
+          break;
+        }
       }
       const error0 = Math.abs(p.val - target);
       if (error0 < best.error)
@@ -574,11 +630,12 @@
     return best;
   }
 
-  function calcParallelParallel(values, target) {
+  function calcParallelParallel(values, target, threshold = 0) {
     const pairs = allParallelPairs(values);
     const pairVals = pairs.map(p => p.val);
     let best = { error: INF };
     for (let i = 0; i < pairs.length; i++) {
+      if (threshold > 0 && best.error <= threshold) break;
       const idx = closestIdx(pairVals, target - pairs[i].val);
       for (let k = Math.max(0, idx-W); k <= Math.min(pairs.length-1, idx+W); k++) {
         const total = pairs[i].val + pairs[k].val;
@@ -586,12 +643,15 @@
         if (error < best.error)
           best = { R1: pairs[i].R1, R2: pairs[i].R2,
                    R3: pairs[k].R1, R4: pairs[k].R2, total, error };
+        if (threshold > 0 && best.error <= threshold) {
+          best.stopped = true;
+          break;
+        }
       }
     }
     return best;
   }
 
-  // ── Formatting ─────────────────────────────────────────────────────────────
   function fmtR(v) {
     if (v === 0)   return '0 Ohm (jumper)';
     if (v === INF) return 'open (not placed)';
@@ -692,7 +752,6 @@
     return v.toFixed(2).replace(/\.?0+$/,'') + 'Ω';
   }
 
-  // ── Clipboard ──────────────────────────────────────────────────────────────
   function copyCard(uid) {
     const btn = document.getElementById(uid);
     if (!btn) return;
@@ -723,7 +782,6 @@
     cb();
   }
 
-  // ── PDF Export ─────────────────────────────────────────────────────────────
   function exportPDF() {
     const targetRaw = document.getElementById('target').value.trim();
     const output    = document.getElementById('output').innerHTML;
@@ -786,12 +844,11 @@
       <div class="disclaimer">
         Always check the results and check-calculate them!
       </div>
-      <script>window.onload = () => { window.print(); window.close(); }<\/script>
+      <script>window.onload = () => { window.print(); window.close(); }<<\/script>
       </body></html>`);
     win.document.close();
   }
 
-  // ── SVG helpers ────────────────────────────────────────────────────────────
   function svgRes(cx, cy, label) {
     const w = 28, h = 12;
     return `
@@ -803,7 +860,6 @@
     return `<circle cx="${x}" cy="${y}" r="2.5" class="node"/>`;
   }
 
-  // ── SVG Circuits ───────────────────────────────────────────────────────────
   function svgParallel(R1, R2) {
     const ax=30, bx=150, ty=25, by=55, mid=90, my=(ty+by)/2;
     return `<svg width="180" height="80" class="circuit-svg">
@@ -952,12 +1008,22 @@
     </svg>`;
   }
 
-  // ── Card builder ───────────────────────────────────────────────────────────
-  function card(title, diagram, rows, totalR, target, isBest = false, rank = 0) {
+  function card(title, badges, diagram, rows, totalR, target, isBest = false, rank = 0) {
     const rowsHtml = rows.map(([label, val]) =>
       `<tr><td>${label}</td><td>${fmtRDisplay(val)}</td></tr>`
     ).join('');
-    const badge     = isBest ? '<span class="best-badge">BEST</span>' : '';
+    
+    // Build display badges HTML
+    const badgeColors = {
+      'Simplest': '#1a7a1a',
+      'Best': '#1a7a1a',
+      'Good enough': '#2255cc',
+      'STOPPED': '#cc8800'
+    };
+    const badgeHtml = badges.map(b =>
+      `<span class="best-badge" style="background:${badgeColors[b] || '#666'}; margin-left:4px;">${b}</span>`
+    ).join('');
+    
     const rankBadge = rank > 0
       ? `<span class="rank-badge">${rank}.</span>`
       : '';
@@ -965,8 +1031,9 @@
     const uid = 'copy_' + Math.random().toString(36).slice(2);
 
     const plainRows = rows.map(([label, val]) => `  ${label}: ${fmtR(val)}`).join('\n');
+    // Clean title for clipboard - no badges
     const clipText  = [
-      `#${rank} ` + title + (isBest ? ' [BEST]' : ''),
+      `#${rank} ` + title,
       plainRows,
       `  Total resistance: ${fmtTotalPlain(totalR, target)}`,
       `  Error vs target:  ${fmtErrorPlain(totalR, target)}`,
@@ -975,7 +1042,7 @@
     return `
       <div class="${cls}">
         <h3>
-          <span class="h3-left">${title}${badge}</span>
+          <span class="h3-left">${title}${badgeHtml}</span>
           ${rankBadge}
         </h3>
         <div class="card-body">
@@ -1000,7 +1067,6 @@
     return `<div class="card-row">${cardA}${cardB}</div>`;
   }
 
-  // ── Main calculate ─────────────────────────────────────────────────────────
   function calculate() {
     const raw    = document.getElementById('target').value;
     const target = parseResistance(raw);
@@ -1011,61 +1077,111 @@
       return;
     }
 
+    const precisionRaw = document.getElementById('precision').value;
+    const precisionPct = parseFloat(precisionRaw);
+    const threshold = (!isNaN(precisionPct) && precisionPct > 0)
+      ? Math.abs(target) * (precisionPct / 100)
+      : 0;
+    const useThreshold = threshold > 0;
+
     out.innerHTML = '<p class="loading">Calculating...</p>';
 
     setTimeout(() => {
       const values = buildValues(document.getElementById('eseries').value);
-      const par   = calcParallelOnly(values, target);
-      const par3  = calcParallelThree(values, target);
-      const ser   = calcSeriesOnly(values, target);
-      const ser3  = calcSeriesThree(values, target);
-      const combo = calcParallelPlusSeries(values, target);
-      const pp    = calcParallelParallel(values, target);
+      const par   = calcParallelOnly(values, target, threshold);
+      const par3  = calcParallelThree(values, target, threshold);
+      const ser   = calcSeriesOnly(values, target, threshold);
+      const ser3  = calcSeriesThree(values, target, threshold);
+      const combo = calcParallelPlusSeries(values, target, threshold);
+      const pp    = calcParallelParallel(values, target, threshold);
 
       const results = { par, par3, ser, ser3, combo, pp };
 
-      // Determine best and ranks
-      const bestKey = Object.entries(results)
-        .reduce((a, [k, v]) => v.error < a[1].error ? [k, v] : a,
-                ['par', par])[0];
+      const resistorCount = {
+        par:  2,
+        par3: 3,
+        ser:  2,
+        ser3: 3,
+        combo: 3,
+        pp:    4,
+      };
+
+      // Determine "Best" / "Good enough": lowest error overall
+      const bestErrorKey = Object.entries(results)
+        .reduce((a, [k, v]) => v.error < a[1].error ? [k, v] : a, ['par', par])[0];
+
+      // Determine "Simplest": meets threshold with fewest resistors, prefer parallel over series on tie
+      const simplestKey = useThreshold
+        ? Object.entries(results)
+            .filter(([k, v]) => v.error <= threshold)
+            .sort((a, b) => {
+              const countDiff = resistorCount[a[0]] - resistorCount[b[0]];
+              if (countDiff !== 0) return countDiff;
+              return a[1].error - b[1].error;
+            })[0]?.[0] || null
+        : null;
+
+      // The "best-card" green border goes to:
+      // - "Simplest" when precision > 0
+      // - "Best" (lowest error) when precision = 0
+      const bestCardKey = useThreshold ? simplestKey : bestErrorKey;
 
       const ranked = Object.entries(results)
         .sort((a, b) => a[1].error - b[1].error)
         .map(([k], i) => [k, i + 1]);
       const rankMap = Object.fromEntries(ranked);
 
+      // Build badges for each schematic
+      function getBadges(key) {
+        const badges = [];
+        if (useThreshold) {
+          if (key === simplestKey) badges.push('Simplest');
+          if (key === bestErrorKey) badges.push('Good enough');
+        } else {
+          if (key === bestErrorKey) badges.push('Best');
+        }
+        if (results[key].stopped) badges.push('STOPPED');
+        return badges;
+      }
+
       out.innerHTML =
         cardRow(
           card('2 Resistors in Parallel',
+            getBadges('par'),
             svgParallel(par.R1, par.R2),
             [['R1', par.R1], ['R2', par.R2]],
-            par.total, target, bestKey === 'par', rankMap['par']),
+            par.total, target, bestCardKey === 'par', rankMap['par']),
           card('3 Resistors in Parallel',
+            getBadges('par3'),
             svgParallelThree(par3.R1, par3.R2, par3.R3),
             [['R1', par3.R1], ['R2', par3.R2], ['R3', par3.R3]],
-            par3.total, target, bestKey === 'par3', rankMap['par3'])
+            par3.total, target, bestCardKey === 'par3', rankMap['par3'])
         ) +
         cardRow(
           card('2 Resistors in Series',
+            getBadges('ser'),
             svgSeries(ser.R1, ser.R2),
             [['R1', ser.R1], ['R2', ser.R2]],
-            ser.total, target, bestKey === 'ser', rankMap['ser']),
+            ser.total, target, bestCardKey === 'ser', rankMap['ser']),
           card('3 Resistors in Series',
+            getBadges('ser3'),
             svgSeriesThree(ser3.R1, ser3.R2, ser3.R3),
             [['R1', ser3.R1], ['R2', ser3.R2], ['R3', ser3.R3]],
-            ser3.total, target, bestKey === 'ser3', rankMap['ser3'])
+            ser3.total, target, bestCardKey === 'ser3', rankMap['ser3'])
         ) +
         cardRow(
           card('(2 Parallel) + 1 Series',
+            getBadges('combo'),
             svgParallelSeries(combo.R1, combo.R2, combo.Rs),
             [['R1 (parallel)', combo.R1], ['R2 (parallel)', combo.R2],
              ['Rs (series)', combo.Rs]],
-            combo.total, target, bestKey === 'combo', rankMap['combo']),
+            combo.total, target, bestCardKey === 'combo', rankMap['combo']),
           card('(2 Parallel) + (2 Parallel)',
+            getBadges('pp'),
             svgParallelParallel(pp.R1, pp.R2, pp.R3, pp.R4),
             [['R1 (block 1)', pp.R1], ['R2 (block 1)', pp.R2],
              ['R3 (block 2)', pp.R3], ['R4 (block 2)', pp.R4]],
-            pp.total, target, bestKey === 'pp', rankMap['pp'])
+            pp.total, target, bestCardKey === 'pp', rankMap['pp'])
         );
 
       document.getElementById('pdfBtn').style.display = 'inline-block';
@@ -1073,7 +1189,6 @@
     }, 20);
   }
 
-  // ── Init ───────────────────────────────────────────────────────────────────
   buildSeriesUI();
 
   document.getElementById('target').addEventListener('keydown', e => {
