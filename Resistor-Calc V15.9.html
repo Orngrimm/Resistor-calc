@@ -309,7 +309,7 @@
   <div id="output"></div>
 
   <div class="disclaimer">
-    âš ï¸ Always check the results and check-calculate them!
+    ⚠️ Always check the results and check-calculate them!
   </div>
 </div>
 
@@ -361,21 +361,21 @@
   };
 
   const SERIES_DESC = {
-    E6:   "6 values per decade â€” coarse, high-tolerance applications.",
-    E12:  "12 values per decade â€” common general-purpose series (default).",
-    E24:  "24 values per decade â€” widely stocked, 5% spacing.",
-    E48:  "48 values per decade â€” precision 2% spacing.",
-    E96:  "96 values per decade â€” high-precision 1% spacing.",
-    E192: "192 values per decade â€” ultra-precision 0.5% spacing."
+    E6:   "6 values per decade — coarse, high-tolerance applications.",
+    E12:  "12 values per decade — common general-purpose series (default).",
+    E24:  "24 values per decade — widely stocked, 5% spacing.",
+    E48:  "48 values per decade — precision 2% spacing.",
+    E96:  "96 values per decade — high-precision 1% spacing.",
+    E192: "192 values per decade — ultra-precision 0.5% spacing."
   };
 
   const SERIES_LABELS = {
-    E6:   'E6 â€” 6 values/decade (20% spacing)',
-    E12:  'E12 â€” 12 values/decade (10% spacing)',
-    E24:  'E24 â€” 24 values/decade (5% spacing)',
-    E48:  'E48 â€” 48 values/decade (2% spacing)',
-    E96:  'E96 â€” 96 values/decade (1% spacing)',
-    E192: 'E192 â€” 192 values/decade (0.5% spacing)',
+    E6:   'E6 — 6 values/decade (20% spacing)',
+    E12:  'E12 — 12 values/decade (10% spacing)',
+    E24:  'E24 — 24 values/decade (5% spacing)',
+    E48:  'E48 — 48 values/decade (2% spacing)',
+    E96:  'E96 — 96 values/decade (1% spacing)',
+    E192: 'E192 — 192 values/decade (0.5% spacing)',
   };
 
   const SLOW_SERIES = ['E48', 'E96', 'E192'];
@@ -389,7 +389,7 @@
              .replace(/(\d)m(\d)/g, '$1.$2m')
              .replace(/(\d)r(\d)/g, '$1.$2')
              .replace(/(\d)g(\d)/g, '$1.$2g');
-    const match = str.match(/^([0-9.]+)\s*([kmgr]?)(?:ohm|Ï‰|o)?$/);
+    const match = str.match(/^([0-9.]+)\s*([kmgr]?)(?:ohm|ω|o)?$/);
     if (!match) return NaN;
     const val = parseFloat(match[1]);
     switch (match[2]) {
@@ -670,28 +670,28 @@
   }
 
   function fmtRDisplay(v) {
-    if (v === 0)   return '0 Î© (jumper)';
-    if (v === INF) return 'âˆž (not placed)';
-    if (v >= 1e9)  return (v/1e9).toFixed(3).replace(/\.?0+$/,'') + ' GÎ©';
-    if (v >= 1e6)  return (v/1e6).toFixed(3).replace(/\.?0+$/,'') + ' MÎ©';
-    if (v >= 1e3)  return (v/1e3).toFixed(3).replace(/\.?0+$/,'') + ' kÎ©';
-    return v.toFixed(3).replace(/\.?0+$/,'') + ' Î©';
+    if (v === 0)   return '0 Ω (jumper)';
+    if (v === INF) return '∞ (not placed)';
+    if (v >= 1e9)  return (v/1e9).toFixed(3).replace(/\.?0+$/,'') + ' GΩ';
+    if (v >= 1e6)  return (v/1e6).toFixed(3).replace(/\.?0+$/,'') + ' MΩ';
+    if (v >= 1e3)  return (v/1e3).toFixed(3).replace(/\.?0+$/,'') + ' kΩ';
+    return v.toFixed(3).replace(/\.?0+$/,'') + ' Ω';
   }
 
   function fmtTotal(v, target = null) {
     let str;
-    if (v === INF) str = 'âˆž Î© (open)';
-    else if (v >= 1e9) str = (v/1e9).toFixed(4) + ' GÎ©';
-    else if (v >= 1e6) str = (v/1e6).toFixed(4) + ' MÎ©';
-    else if (v >= 1e3) str = (v/1e3).toFixed(4) + ' kÎ©';
-    else str = v.toFixed(4) + ' Î©';
+    if (v === INF) str = '∞ Ω (open)';
+    else if (v >= 1e9) str = (v/1e9).toFixed(4) + ' GΩ';
+    else if (v >= 1e6) str = (v/1e6).toFixed(4) + ' MΩ';
+    else if (v >= 1e3) str = (v/1e3).toFixed(4) + ' kΩ';
+    else str = v.toFixed(4) + ' Ω';
 
     if (target !== null && isFinite(target) && isFinite(v)) {
       let tStr;
-      if      (target >= 1e9) tStr = parseFloat((target/1e9).toPrecision(10)).toString() + ' GÎ©';
-      else if (target >= 1e6) tStr = parseFloat((target/1e6).toPrecision(10)).toString() + ' MÎ©';
-      else if (target >= 1e3) tStr = parseFloat((target/1e3).toPrecision(10)).toString() + ' kÎ©';
-      else                    tStr = parseFloat(target.toPrecision(10)).toString() + ' Î©';
+      if      (target >= 1e9) tStr = parseFloat((target/1e9).toPrecision(10)).toString() + ' GΩ';
+      else if (target >= 1e6) tStr = parseFloat((target/1e6).toPrecision(10)).toString() + ' MΩ';
+      else if (target >= 1e3) tStr = parseFloat((target/1e3).toPrecision(10)).toString() + ' kΩ';
+      else                    tStr = parseFloat(target.toPrecision(10)).toString() + ' Ω';
       str += ` <span style="color:#888;font-weight:normal">(Target: ${tStr})</span>`;
     }
     return str;
@@ -717,10 +717,10 @@
   }
 
   function fmtAbsErr(v) {
-    if (v >= 1e9)  return (v/1e9).toFixed(3).replace(/\.?0+$/,'') + ' GÎ©';
-    if (v >= 1e6)  return (v/1e6).toFixed(3).replace(/\.?0+$/,'') + ' MÎ©';
-    if (v >= 1e3)  return (v/1e3).toFixed(3).replace(/\.?0+$/,'') + ' kÎ©';
-    return v.toFixed(3).replace(/\.?0+$/,'') + ' Î©';
+    if (v >= 1e9)  return (v/1e9).toFixed(3).replace(/\.?0+$/,'') + ' GΩ';
+    if (v >= 1e6)  return (v/1e6).toFixed(3).replace(/\.?0+$/,'') + ' MΩ';
+    if (v >= 1e3)  return (v/1e3).toFixed(3).replace(/\.?0+$/,'') + ' kΩ';
+    return v.toFixed(3).replace(/\.?0+$/,'') + ' Ω';
   }
 
   function fmtAbsErrPlain(v) {
@@ -731,7 +731,7 @@
   }
 
   function fmtError(total, target) {
-    if (!isFinite(total) || !isFinite(target) || target === 0) return 'â€”';
+    if (!isFinite(total) || !isFinite(target) || target === 0) return '—';
     const pct    = ((total - target) / target) * 100;
     const absErr = total - target;
     const absPct = Math.abs(pct);
@@ -752,12 +752,12 @@
   }
 
   function lblRDisplay(v) {
-    if (v === 0)   return '0Î©';
-    if (v === INF) return 'âˆž';
+    if (v === 0)   return '0Ω';
+    if (v === INF) return '∞';
     if (v >= 1e9)  return (v/1e9).toFixed(2).replace(/\.?0+$/,'') + 'G';
     if (v >= 1e6)  return (v/1e6).toFixed(2).replace(/\.?0+$/,'') + 'M';
     if (v >= 1e3)  return (v/1e3).toFixed(2).replace(/\.?0+$/,'') + 'k';
-    return v.toFixed(2).replace(/\.?0+$/,'') + 'Î©';
+    return v.toFixed(2).replace(/\.?0+$/,'') + 'Ω';
   }
 
   function copyCard(uid) {
@@ -847,7 +847,7 @@
     const win = window.open('', '_blank');
     win.document.write(`
       <!DOCTYPE html><html><head>
-      <title>Resistor Calculator â€” ${targetRaw}</title>
+      <title>Resistor Calculator — ${targetRaw}</title>
       ${style}</head><body>
       <h1>Resistor Combination Calculator</h1>
       <div class="subtitle">
@@ -1088,7 +1088,7 @@
     const out    = document.getElementById('output');
 
     if (isNaN(target) || target < 0) {
-      out.innerHTML = '<p style="color:red">Please enter a valid resistance â€” e.g. 4700, 4k7, 4.7k, 1M, 100R.</p>';
+      out.innerHTML = '<p style="color:red">Please enter a valid resistance — e.g. 4700, 4k7, 4.7k, 1M, 100R.</p>';
       return;
     }
 
