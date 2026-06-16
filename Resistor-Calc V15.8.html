@@ -142,6 +142,10 @@
       border-left: 4px solid #1a7a1a;
       background: #f0fff0;
     }
+    .card.failed-card {
+      border-left: 4px solid #cc2222;
+      background: #fff0f0;
+    }
     .card h3 {
       margin: 0 0 10px 0;
       font-size: 1rem;
@@ -151,6 +155,7 @@
       justify-content: space-between;
     }
     .card.best-card h3 { color: #1a5a1a; }
+    .card.failed-card h3 { color: #991111; }
     .h3-left {
       display: flex;
       align-items: center;
@@ -180,6 +185,7 @@
       flex-shrink: 0;
     }
     .card.best-card .rank-badge { background: #1a7a1a; }
+    .card.failed-card .rank-badge { background: #cc2222; }
     .card-body {
       display: flex;
       flex-direction: column;
@@ -211,6 +217,8 @@
     .copy-btn.copied { background: #1a7a1a; }
     .card.best-card .copy-btn { background: #1a7a1a; }
     .card.best-card .copy-btn:hover { background: #145a14; }
+    .card.failed-card .copy-btn { background: #cc2222; }
+    .card.failed-card .copy-btn:hover { background: #aa1111; }
     .disclaimer {
       margin-top: 18px;
       padding: 10px 14px;
@@ -1008,7 +1016,7 @@
     </svg>`;
   }
 
-  function card(title, badges, diagram, rows, totalR, target, isBest = false, rank = 0, isGoodEnough = false) {
+  function card(title, badges, diagram, rows, totalR, target, isBest = false, rank = 0, isGoodEnough = false, isFailed = false) {
     const rowsHtml = rows.map(([label, val]) =>
       `<tr><td>${label}</td><td>${fmtRDisplay(val)}</td></tr>`
     ).join('');
@@ -1017,8 +1025,8 @@
     const badgeColors = {
       'Simplest': '#2255cc',
       'Best': '#1a7a1a',
-      'Good enough': '#1a7a1a',
-      'STOPPED': '#cc8800'
+      'STOPPED': '#cc8800',
+      'Imprecise': '#cc2222'
     };
     const badgeHtml = badges.map(b =>
       `<span class="best-badge" style="background:${badgeColors[b] || '#666'}; margin-left:4px;">${b}</span>`
@@ -1027,7 +1035,7 @@
     const rankBadge = rank > 0
       ? `<span class="rank-badge">${rank}.</span>`
       : '';
-    const cls = (isBest || isGoodEnough) ? 'card best-card' : 'card';
+    const cls = (isBest || isGoodEnough) ? 'card best-card' : isFailed ? 'card failed-card' : 'card';
     const uid = 'copy_' + Math.random().toString(36).slice(2);
 
     const plainRows = rows.map(([label, val]) => `  ${label}: ${fmtR(val)}`).join('\n');
@@ -1136,12 +1144,17 @@
         const badges = [];
         if (useThreshold) {
           if (key === simplestKey) badges.push('Simplest');
-          if (key === bestErrorKey) badges.push('Good enough');
+          if (results[key].error > threshold) badges.push('Imprecise');
         } else {
           if (key === bestErrorKey) badges.push('Best');
         }
         if (results[key].stopped) badges.push('STOPPED');
         return badges;
+      }
+
+      // A circuit "fails" when precision threshold is set and it doesn't meet it
+      function isFailed(key) {
+        return useThreshold && results[key].error > threshold;
       }
 
       out.innerHTML =
@@ -1150,24 +1163,24 @@
             getBadges('par'),
             svgParallel(par.R1, par.R2),
             [['R1', par.R1], ['R2', par.R2]],
-            par.total, target, bestCardKey === 'par', rankMap['par'], bestErrorKey === 'par'),
+            par.total, target, bestCardKey === 'par', rankMap['par'], bestErrorKey === 'par', isFailed('par')),
           card('3 Resistors in Parallel',
             getBadges('par3'),
             svgParallelThree(par3.R1, par3.R2, par3.R3),
             [['R1', par3.R1], ['R2', par3.R2], ['R3', par3.R3]],
-            par3.total, target, bestCardKey === 'par3', rankMap['par3'], bestErrorKey === 'par3')
+            par3.total, target, bestCardKey === 'par3', rankMap['par3'], bestErrorKey === 'par3', isFailed('par3'))
         ) +
         cardRow(
           card('2 Resistors in Series',
             getBadges('ser'),
             svgSeries(ser.R1, ser.R2),
             [['R1', ser.R1], ['R2', ser.R2]],
-            ser.total, target, bestCardKey === 'ser', rankMap['ser'], bestErrorKey === 'ser'),
+            ser.total, target, bestCardKey === 'ser', rankMap['ser'], bestErrorKey === 'ser', isFailed('ser')),
           card('3 Resistors in Series',
             getBadges('ser3'),
             svgSeriesThree(ser3.R1, ser3.R2, ser3.R3),
             [['R1', ser3.R1], ['R2', ser3.R2], ['R3', ser3.R3]],
-            ser3.total, target, bestCardKey === 'ser3', rankMap['ser3'], bestErrorKey === 'ser3')
+            ser3.total, target, bestCardKey === 'ser3', rankMap['ser3'], bestErrorKey === 'ser3', isFailed('ser3'))
         ) +
         cardRow(
           card('(2 Parallel) + 1 Series',
@@ -1175,13 +1188,13 @@
             svgParallelSeries(combo.R1, combo.R2, combo.Rs),
             [['R1 (parallel)', combo.R1], ['R2 (parallel)', combo.R2],
              ['Rs (series)', combo.Rs]],
-            combo.total, target, bestCardKey === 'combo', rankMap['combo'], bestErrorKey === 'combo'),
+            combo.total, target, bestCardKey === 'combo', rankMap['combo'], bestErrorKey === 'combo', isFailed('combo')),
           card('(2 Parallel) + (2 Parallel)',
             getBadges('pp'),
             svgParallelParallel(pp.R1, pp.R2, pp.R3, pp.R4),
             [['R1 (block 1)', pp.R1], ['R2 (block 1)', pp.R2],
              ['R3 (block 2)', pp.R3], ['R4 (block 2)', pp.R4]],
-            pp.total, target, bestCardKey === 'pp', rankMap['pp'], bestErrorKey === 'pp')
+            pp.total, target, bestCardKey === 'pp', rankMap['pp'], bestErrorKey === 'pp', isFailed('pp'))
         );
 
       document.getElementById('pdfBtn').style.display = 'inline-block';
