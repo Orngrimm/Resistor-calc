@@ -1190,18 +1190,18 @@
             ser3.total, target, bestCardKey === 'ser3', rankMap['ser3'], bestErrorKey === 'ser3', isFailed('ser3'))
         ) +
         cardRow(
-          card('(2 Parallel) + 1 Series',
-            getBadges('combo'),
-            svgParallelSeries(combo.R1, combo.R2, combo.Rs),
-            [['R1 (parallel)', combo.R1], ['R2 (parallel)', combo.R2],
-             ['Rs (series)', combo.Rs]],
-            combo.total, target, bestCardKey === 'combo', rankMap['combo'], bestErrorKey === 'combo', isFailed('combo')),
           card('(2 Parallel) + (2 Parallel)',
             getBadges('pp'),
             svgParallelParallel(pp.R1, pp.R2, pp.R3, pp.R4),
             [['R1 (block 1)', pp.R1], ['R2 (block 1)', pp.R2],
              ['R3 (block 2)', pp.R3], ['R4 (block 2)', pp.R4]],
-            pp.total, target, bestCardKey === 'pp', rankMap['pp'], bestErrorKey === 'pp', isFailed('pp'))
+            pp.total, target, bestCardKey === 'pp', rankMap['pp'], bestErrorKey === 'pp', isFailed('pp')),
+          card('(2 Parallel) + 1 Series',
+            getBadges('combo'),
+            svgParallelSeries(combo.R1, combo.R2, combo.Rs),
+            [['R1 (parallel)', combo.R1], ['R2 (parallel)', combo.R2],
+             ['Rs (series)', combo.Rs]],
+            combo.total, target, bestCardKey === 'combo', rankMap['combo'], bestErrorKey === 'combo', isFailed('combo'))
         );
 
       document.getElementById('pdfBtn').style.display = 'inline-block';
