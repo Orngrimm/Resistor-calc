@@ -301,6 +301,13 @@
     </div>
   </div>
 
+  <div class="input-row">
+    <label style="display:flex; align-items:center; gap:8px; font-weight:normal;">
+      <input type="checkbox" id="forbidDirect" style="width:auto;" />
+      <span><strong>Forbid direct 1:1 value</strong> — if checked, the exact target value is removed from the E-series before calculating, so results like "R1 = target, R2 = jumper/not placed" cannot occur.</span>
+    </label>
+  </div>
+
   <div class="button-row">
     <button onclick="calculate()">Calculate</button>
     <button id="pdfBtn" onclick="exportPDF()">Export PDF</button>
@@ -460,7 +467,7 @@
       SLOW_SERIES.includes(sel.value) ? 'block' : 'none';
   }
 
-  function buildValues(seriesName) {
+  function buildValues(seriesName, excludeValue = null) {
     const base = E_SERIES[seriesName];
     const set = new Set();
     for (const decade of DECADES)
@@ -468,7 +475,14 @@
         set.add(Math.round(v * decade * 1e6) / 1e6);
     set.add(0);
     set.add(INF);
-    return Array.from(set).sort((a, b) => a - b);
+    let arr = Array.from(set);
+    if (excludeValue !== null && isFinite(excludeValue) && excludeValue > 0) {
+      // Remove the value that matches the target (within floating-point tolerance),
+      // but always keep 0 (jumper) and INF (not placed) as placeholders.
+      const tol = Math.max(excludeValue * 1e-9, 1e-6);
+      arr = arr.filter(v => v === 0 || v === INF || Math.abs(v - excludeValue) > tol);
+    }
+    return arr.sort((a, b) => a - b);
   }
 
   function parallel(a, b) {
@@ -1102,7 +1116,8 @@
     out.innerHTML = '<p class="loading">Calculating...</p>';
 
     setTimeout(() => {
-      const values = buildValues(document.getElementById('eseries').value);
+      const forbidDirect = document.getElementById('forbidDirect').checked;
+      const values = buildValues(document.getElementById('eseries').value, forbidDirect ? target : null);
       const par   = calcParallelOnly(values, target, threshold);
       const par3  = calcParallelThree(values, target, threshold);
       const ser   = calcSeriesOnly(values, target, threshold);
