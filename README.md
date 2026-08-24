@@ -5,6 +5,7 @@ Want to run it directly from here?
 https://rawcdn.githack.com/Orngrimm/Resistor-calc/main/Resistor-Calc%20V15.12.html
 
 # Features
+- Allows to ignore the target-value (No need to be told to build a 56k resistor with 56k + 0 right?)
 - Now with optimised calculations which let it calculate up to e192 (LOL!) in a reasonable time.*  
 - Sports a copy-Button to quickly copy a solution as plaintext.  
 - Now also with PDF-export!
