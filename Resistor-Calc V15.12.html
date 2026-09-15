@@ -19,6 +19,21 @@
       box-shadow: 0 0 10px rgba(0,0,0,0.1);
     }
     h1 { margin-top: 0; font-size: 1.4rem; }
+    .header-row {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .header-row h1 { margin-bottom: 0; }
+    .origin-link {
+      font-size: 0.85rem;
+      color: #2255cc;
+      text-decoration: none;
+      white-space: nowrap;
+    }
+    .origin-link:hover { text-decoration: underline; }
     .input-row { margin-bottom: 14px; }
     label { font-weight: bold; display: block; margin-bottom: 4px; }
     input[type=text], select {
@@ -272,7 +287,10 @@
 </head>
 <body>
 <div class="container">
-  <h1>Resistor Combination Calculator</h1>
+  <div class="header-row">
+    <h1>Resistor Combination Calculator</h1>
+    <a class="origin-link" href="https://github.com/Orngrimm/Resistor-calc" target="_blank" rel="noopener noreferrer">Origin &amp; Updates</a>
+  </div>
 
   <div class="input-row">
     <label>E-Series:</label>
