@@ -2,7 +2,7 @@
 A simple calculator for ideal resistors for non standard values.  
 
 Want to run it directly from here?  
-https://rawcdn.githack.com/Orngrimm/Resistor-calc/main/Resistor-Calc%20V15.12.html
+https://rawcdn.githack.com/Orngrimm/Resistor-calc/main/Resistor-Calc%20V15.13.html
 
 # Features
 - Allows to ignore the target-value (No need to be told to build a 56k resistor with 56k + 0 right?)
